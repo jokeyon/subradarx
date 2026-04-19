@@ -11,7 +11,7 @@
   "nav": {
     "newRenewal": "New renewal",
     "editRenewal": "Edit renewal",
-    "paywall": "SubRadar Max Pro"
+    "paywall": "subradax Premium"
   },
   "renewals": {
     "empty": "Add streaming, apps, or any recurring charge. We’ll remind you before the next bill.",
@@ -63,14 +63,14 @@
     "expoBannerBody": "In-app purchases need a development or production build (EAS / expo run). Use the toggle below to simulate Pro while designing UI.",
     "sectionPlan": "Plan",
     "planFree": "Free limit: %{limit} renewals. Pro: unlimited + export.",
-    "proActive": "SubRadar Max Pro active",
+    "proActive": "subradax Premium active",
     "upgradePro": "Upgrade to Pro",
     "sectionDev": "Developer",
     "simulatePro": "Simulate Pro (local only)",
     "sectionNotif": "Notifications",
     "enableReminders": "Enable reminders",
     "notifOn": "Reminders are allowed.",
-    "notifOff": "Open system Settings › SubRadar Max to allow notifications.",
+    "notifOff": "Open system Settings › subradax to allow notifications.",
     "sectionExport": "Export",
     "exportBtn": "Export renewals…",
     "exportNeedsPro": "Requires Pro.",
@@ -79,7 +79,7 @@
     "feedback": "Send feedback",
     "feedbackUnavailable": "No mail app available.",
     "sectionPrivacy": "Privacy",
-    "privacyBody": "Renewals stay on this device by default. Cloud sync is optional if you connect to the SubRadar Max API.",
+    "privacyBody": "Renewals stay on this device by default. Cloud sync is optional if you connect to the subradax API.",
     "privacyNoAnalytics": "We don’t collect analytics in this app; reminders use local notifications only.",
     "restore": "Restore purchases",
     "sectionCloud": "Cloud",

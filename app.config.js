@@ -1,5 +1,5 @@
 /**
- * SubRadar Max — Expo config (US / English-first subscription tracker).
+ * subradax — Expo config (subscription tracker).
  * Replace ./assets/icon.png with a real 1024×1024 PNG before store builds.
  */
 require('dotenv').config();
@@ -8,8 +8,8 @@ const EAS_PROJECT_ID = process.env.EAS_PROJECT_ID || 'f5858867-d2a0-4c97-9c87-6d
 
 module.exports = {
   expo: {
-    name: 'SubRadar Max',
-    slug: 'subradar',
+    name: 'subradax',
+    slug: 'subradax',
     version: '1.0.0',
     /** EAS Update: OTA 与商店包用同一 runtime；改 `version` 后需重新 eas build。 */
     runtimeVersion: { policy: 'appVersion' },
@@ -19,7 +19,7 @@ module.exports = {
     orientation: 'portrait',
     /** Mobile only — avoids EAS Update export requiring react-native-web. */
     platforms: ['ios', 'android'],
-    scheme: 'subradar',
+    scheme: 'subradax',
     userInterfaceStyle: 'automatic',
     /** RNIap + EAS: if pods fail again, try turning back on after a successful build. */
     newArchEnabled: false,
@@ -38,7 +38,7 @@ module.exports = {
       /** Bump this string before each App Store upload (EAS `autoIncrement` is incompatible with app.config.js). */
       buildNumber: '6',
       infoPlist: {
-        CFBundleDisplayName: 'SubRadar Max',
+        CFBundleDisplayName: 'subradax',
         ITSAppUsesNonExemptEncryption: false,
       },
     },
@@ -69,7 +69,7 @@ module.exports = {
         'expo-notifications',
         {
           color: '#6366F1',
-          defaultChannel: 'subradar-renewals',
+          defaultChannel: 'subradax-renewals',
           sounds: [],
         },
       ],
@@ -80,10 +80,10 @@ module.exports = {
     },
     extra: {
       eas: {
-        /** @jokeyon/subradar — override with env on CI if needed */
+        /** @jokeyon/subradax — override with env on CI if needed */
         projectId: EAS_PROJECT_ID,
       },
-      /** SubRadar Max API (device/emulator: use LAN IP or tunnel, not localhost). */
+      /** subradax API (device/emulator: use LAN IP or tunnel, not localhost). */
       apiUrl: process.env.EXPO_PUBLIC_API_URL || 'http://localhost:8787',
     },
   },

@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const KEY = '@subradar_app_locale';
+const KEY = '@subradax_app_locale';
 
 export type AppLocalePreference = 'system' | 'zh' | 'en';
 

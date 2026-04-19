@@ -22,7 +22,7 @@ const PREFIX = 'renewal:';
 
 export async function ensureAndroidChannel() {
   if (Platform.OS === 'android') {
-    await Notifications.setNotificationChannelAsync('subradar-renewals', {
+    await Notifications.setNotificationChannelAsync('subradax-renewals', {
       name: 'Renewal reminders',
       importance: Notifications.AndroidImportance.DEFAULT,
     });

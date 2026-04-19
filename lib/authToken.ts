@@ -1,6 +1,6 @@
 import * as SecureStore from 'expo-secure-store';
 
-const KEY = 'subradar_api_token';
+const KEY = 'subradax_api_token';
 
 // DISABLED - No cloud sync, no API token needed
 // export async function getApiToken(): Promise<string | null> {

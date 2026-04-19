@@ -1,6 +1,6 @@
 /** Used by Settings → Send feedback (`mailto:`). Replace with your support address before release. */
 export const FEEDBACK_MAILTO =
-  'mailto:support@subradar.app?subject=SubRadar%20Max%20feedback&body=';
+  'mailto:support@subradax.app?subject=subradax%20feedback&body=';
 
 /**
  * When false, StoreKit / Play Billing is not used and everyone gets unlimited renewals + export.

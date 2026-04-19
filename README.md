@@ -1,6 +1,6 @@
-# SubRadar Max (Expo / React Native)
+# subradax (Expo / React Native)
 
-Cross-platform rebuild of **SubRadar Max**: track renewals locally, local notifications, **free up to 3 items**, **Pro** via `react-native-iap` (product ID **`subradarpro`**, see `lib/constants.ts`).
+Cross-platform subscription tracker: track renewals locally, local notifications, **free up to 3 items**, **Premium** via `react-native-iap` (product ID **`subradarpro`**, see `lib/constants.ts`).
 
 ## Why this exists
 

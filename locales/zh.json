@@ -11,14 +11,14 @@
   "nav": {
     "newRenewal": "新增续费",
     "editRenewal": "编辑续费",
-    "paywall": "SubRadar Max Pro"
+    "paywall": "subradax Premium"
   },
   "renewals": {
     "empty": "添加视频、应用或任何周期性扣款，我们会在下次扣款前提醒你。",
     "swipeHint": "向左滑动或点上方「汇总」可查看支出合计。",
     "next": "下次 %{date}",
     "add": "＋ 添加",
-    "notifDisabledHint": "未开启系统通知则无法按时提醒，请在系统设置中为 SubRadar Max 允许通知。",
+    "notifDisabledHint": "未开启系统通知则无法按时提醒，请在系统设置中为 subradax 允许通知。",
     "notifOpenSettings": "打开系统设置"
   },
   "billingCycle": {
@@ -63,14 +63,14 @@
     "expoBannerBody": "应用内购买需要开发版或正式版（EAS / expo run）。设计界面时可打开下方开关模拟 Pro。",
     "sectionPlan": "套餐",
     "planFree": "免费最多 %{limit} 条；Pro 不限条数并支持导出。",
-    "proActive": "已开通 SubRadar Max Pro",
+    "proActive": "已开通 subradax Premium",
     "upgradePro": "升级到 Pro",
     "sectionDev": "开发者",
     "simulatePro": "模拟 Pro（仅本机）",
     "sectionNotif": "通知",
     "enableReminders": "开启提醒",
     "notifOn": "已允许发送提醒。",
-    "notifOff": "请在系统设置 › SubRadar Max 中允许通知。",
+    "notifOff": "请在系统设置 › subradax 中允许通知。",
     "sectionExport": "导出",
     "exportBtn": "导出续费列表…",
     "exportNeedsPro": "需要 Pro。",
@@ -79,7 +79,7 @@
     "feedback": "发送反馈",
     "feedbackUnavailable": "未检测到可用的邮件应用。",
     "sectionPrivacy": "隐私",
-    "privacyBody": "续费列表默认仅保存在本设备；若连接 SubRadar Max API，可选择云同步。",
+    "privacyBody": "续费列表默认仅保存在本设备；若连接 subradax API，可选择云同步。",
     "privacyNoAnalytics": "应用内不采集分析数据；提醒仅通过本地通知发送。",
     "restore": "恢复购买",
     "sectionCloud": "云端",
