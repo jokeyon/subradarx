@@ -36,7 +36,7 @@ module.exports = {
       /** Must match a unique App ID you register (app.subradar.ios is taken globally). */
       bundleIdentifier: 'com.jokeyon.subradar',
       /** Bump this string before each App Store upload (EAS `autoIncrement` is incompatible with app.config.js). */
-      buildNumber: '5',
+      buildNumber: '6',
       infoPlist: {
         CFBundleDisplayName: 'SubRadar Max',
         ITSAppUsesNonExemptEncryption: false,
