@@ -1,0 +1,157 @@
+{
+  "common": {
+    "hint": "提示"
+  },
+  "tabs": {
+    "hub": "概览",
+    "renewals": "续费",
+    "summary": "汇总",
+    "settings": "设置"
+  },
+  "nav": {
+    "newRenewal": "新增续费",
+    "editRenewal": "编辑续费",
+    "paywall": "SubRadar Max Pro"
+  },
+  "renewals": {
+    "empty": "添加视频、应用或任何周期性扣款，我们会在下次扣款前提醒你。",
+    "swipeHint": "向左滑动或点上方「汇总」可查看支出合计。",
+    "next": "下次 %{date}",
+    "add": "＋ 添加",
+    "notifDisabledHint": "未开启系统通知则无法按时提醒，请在系统设置中为 SubRadar Max 允许通知。",
+    "notifOpenSettings": "打开系统设置"
+  },
+  "billingCycle": {
+    "weekly": "每周",
+    "monthly": "每月",
+    "yearly": "每年"
+  },
+  "reminder": {
+    "sameDay": "当天",
+    "oneDay": "提前 1 天",
+    "threeDays": "提前 3 天",
+    "sevenDays": "提前 7 天"
+  },
+  "summary": {
+    "empty": "添加续费项后，可查看按币种估算的月支出与年支出。",
+    "monthly": "估算月支出",
+    "yearly": "估算年支出（×12）"
+  },
+  "cloud": {
+    "title": "云同步",
+    "apiUrl": "接口：%{url}",
+    "email": "邮箱",
+    "password": "密码",
+    "signIn": "登录",
+    "signUp": "注册",
+    "switchRegister": "没有账号？注册",
+    "switchLogin": "已有账号？登录",
+    "signedIn": "已登录 — 可备份或从云端恢复列表。",
+    "push": "上传到云端（覆盖服务器）",
+    "pull": "从云端恢复（覆盖本机）",
+    "signOut": "退出登录",
+    "back": "返回",
+    "authOk": "已登录。",
+    "authFailTitle": "登录失败",
+    "pushOk": "已上传到云端。",
+    "pullOk": "已从云端恢复。",
+    "syncFailTitle": "同步失败"
+  },
+  "settings": {
+    "planAllIncluded": "当前版本包含全部功能：不限条数与导出。",
+    "expoBannerTitle": "Expo Go",
+    "expoBannerBody": "应用内购买需要开发版或正式版（EAS / expo run）。设计界面时可打开下方开关模拟 Pro。",
+    "sectionPlan": "套餐",
+    "planFree": "免费最多 %{limit} 条；Pro 不限条数并支持导出。",
+    "proActive": "已开通 SubRadar Max Pro",
+    "upgradePro": "升级到 Pro",
+    "sectionDev": "开发者",
+    "simulatePro": "模拟 Pro（仅本机）",
+    "sectionNotif": "通知",
+    "enableReminders": "开启提醒",
+    "notifOn": "已允许发送提醒。",
+    "notifOff": "请在系统设置 › SubRadar Max 中允许通知。",
+    "sectionExport": "导出",
+    "exportBtn": "导出续费列表…",
+    "exportNeedsPro": "需要 Pro。",
+    "sectionAbout": "关于",
+    "version": "版本 %{version}",
+    "feedback": "发送反馈",
+    "feedbackUnavailable": "未检测到可用的邮件应用。",
+    "sectionPrivacy": "隐私",
+    "privacyBody": "续费列表默认仅保存在本设备；若连接 SubRadar Max API，可选择云同步。",
+    "privacyNoAnalytics": "应用内不采集分析数据；提醒仅通过本地通知发送。",
+    "restore": "恢复购买",
+    "sectionCloud": "云端",
+    "cloudOpen": "账号与同步…",
+    "cloudHint": "可选：与 SubRadar Max 网页控制台使用同一套自建 API 数据。",
+    "sectionLanguage": "语言",
+    "langSystem": "跟随系统",
+    "langZh": "简体中文",
+    "langEn": "English",
+    "shareUnavailableTitle": "无法分享",
+    "shareUnavailableBody": "此设备无法打开系统分享面板。",
+    "shareDialogTitle": "导出续费列表"
+  },
+  "export": {
+    "header": "SubRadar Max 导出 — %{date}",
+    "notesPrefix": "  备注：",
+    "cancelPrefix": "  管理/取消："
+  },
+  "form": {
+    "name": "名称",
+    "namePh": "例如 Netflix",
+    "amount": "金额",
+    "amountPh": "9.99",
+    "currency": "货币代码（ISO）",
+    "currencyPh": "USD",
+    "billingCycle": "扣款周期",
+    "nextCharge": "下次扣款日",
+    "remindMe": "提醒时间",
+    "notes": "备注",
+    "notesPh": "选填",
+    "save": "保存",
+    "markRenewed": "标记已续费",
+    "delete": "删除",
+    "goBack": "返回",
+    "errorName": "请填写名称。",
+    "errorAmount": "请填写有效金额。",
+    "cancelUrl": "管理或取消（链接）",
+    "cancelUrlHint": "粘贴服务商订阅/账户页（https）。应用不会代你取消，仅在浏览器中打开链接。",
+    "cancelUrlPh": "https://…",
+    "openCancelLink": "在浏览器中打开",
+    "errorCancelUrl": "请填写有效的 http(s) 链接，或留空。"
+  },
+  "edit": {
+    "loading": "加载中…",
+    "notFound": "未找到该续费项。",
+    "deleteTitle": "删除此续费？",
+    "cancel": "取消"
+  },
+  "paywall": {
+    "iapDisabledTitle": "订阅",
+    "iapDisabledBody": "当前版本未接入应用内购买，全部功能已开放。",
+    "title": "SubRadar Max Pro",
+    "subtitle": "不限条数、本地提醒与导出。数据仍只保存在本机。",
+    "bullet1": "• 记录全部订阅与周期扣款",
+    "bullet2": "• 扣款前本地提醒",
+    "bullet3": "• 在设置中导出列表",
+    "expoWarn": "Expo Go 无法加载真实商品。请使用开发构建（expo run / EAS），或在开发模式下用「模拟 Pro」。",
+    "loadingPlans": "正在加载方案… 若长时间无响应，请确认商店后台已配置内购且商品 ID 为：%{ids}。",
+    "restore": "恢复购买",
+    "close": "关闭",
+    "purchaseFailed": "购买失败"
+  },
+  "notification": {
+    "title": "续费提醒",
+    "body": "%{name} 将于 %{date} 续费扣款。"
+  },
+  "notifications": {
+    "firstSaveTitle": "开启提醒？",
+    "firstSaveMessage": "我们会在扣款前通过本地通知提醒你，可随时在设置中更改。",
+    "firstSaveContinue": "继续",
+    "firstSaveLater": "暂不",
+    "scheduleIncomplete": "部分提醒未能成功安排。",
+    "retrySchedule": "重试"
+  }
+}

@@ -1,0 +1,157 @@
+{
+  "common": {
+    "hint": "Notice"
+  },
+  "tabs": {
+    "hub": "Overview",
+    "renewals": "Renewals",
+    "summary": "Summary",
+    "settings": "Settings"
+  },
+  "nav": {
+    "newRenewal": "New renewal",
+    "editRenewal": "Edit renewal",
+    "paywall": "SubRadar Max Pro"
+  },
+  "renewals": {
+    "empty": "Add streaming, apps, or any recurring charge. We’ll remind you before the next bill.",
+    "swipeHint": "Swipe left or tap “Summary” above to see totals.",
+    "next": "Next %{date}",
+    "add": "＋ Add",
+    "notifDisabledHint": "Notifications are off. Reminders cannot fire until you allow them in system settings.",
+    "notifOpenSettings": "Open Settings"
+  },
+  "billingCycle": {
+    "weekly": "Weekly",
+    "monthly": "Monthly",
+    "yearly": "Yearly"
+  },
+  "reminder": {
+    "sameDay": "Same day",
+    "oneDay": "1 day before",
+    "threeDays": "3 days before",
+    "sevenDays": "7 days before"
+  },
+  "summary": {
+    "empty": "Add renewals to see estimated monthly and yearly totals (by currency).",
+    "monthly": "Estimated monthly",
+    "yearly": "Estimated yearly (×12)"
+  },
+  "cloud": {
+    "title": "Cloud sync",
+    "apiUrl": "API: %{url}",
+    "email": "Email",
+    "password": "Password",
+    "signIn": "Sign in",
+    "signUp": "Register",
+    "switchRegister": "Need an account? Register",
+    "switchLogin": "Have an account? Sign in",
+    "signedIn": "Signed in — backup or restore your list.",
+    "push": "Push to cloud (overwrite server)",
+    "pull": "Pull from cloud (replace this device)",
+    "signOut": "Sign out",
+    "back": "Back",
+    "authOk": "Signed in.",
+    "authFailTitle": "Sign-in failed",
+    "pushOk": "Uploaded to cloud.",
+    "pullOk": "Restored from cloud.",
+    "syncFailTitle": "Sync failed"
+  },
+  "settings": {
+    "planAllIncluded": "This release includes every feature: unlimited entries and export.",
+    "expoBannerTitle": "Expo Go",
+    "expoBannerBody": "In-app purchases need a development or production build (EAS / expo run). Use the toggle below to simulate Pro while designing UI.",
+    "sectionPlan": "Plan",
+    "planFree": "Free limit: %{limit} renewals. Pro: unlimited + export.",
+    "proActive": "SubRadar Max Pro active",
+    "upgradePro": "Upgrade to Pro",
+    "sectionDev": "Developer",
+    "simulatePro": "Simulate Pro (local only)",
+    "sectionNotif": "Notifications",
+    "enableReminders": "Enable reminders",
+    "notifOn": "Reminders are allowed.",
+    "notifOff": "Open system Settings › SubRadar Max to allow notifications.",
+    "sectionExport": "Export",
+    "exportBtn": "Export renewals…",
+    "exportNeedsPro": "Requires Pro.",
+    "sectionAbout": "About",
+    "version": "Version %{version}",
+    "feedback": "Send feedback",
+    "feedbackUnavailable": "No mail app available.",
+    "sectionPrivacy": "Privacy",
+    "privacyBody": "Renewals stay on this device by default. Cloud sync is optional if you connect to the SubRadar Max API.",
+    "privacyNoAnalytics": "We don’t collect analytics in this app; reminders use local notifications only.",
+    "restore": "Restore purchases",
+    "sectionCloud": "Cloud",
+    "cloudOpen": "Account & sync…",
+    "cloudHint": "Optional: same list as the SubRadar Max web dashboard (self-hosted API).",
+    "sectionLanguage": "Language",
+    "langSystem": "Follow system",
+    "langZh": "简体中文",
+    "langEn": "English",
+    "shareUnavailableTitle": "Sharing unavailable",
+    "shareUnavailableBody": "Cannot open share sheet on this device.",
+    "shareDialogTitle": "Export renewals"
+  },
+  "export": {
+    "header": "SubRadar Max export — %{date}",
+    "notesPrefix": "  Notes:",
+    "cancelPrefix": "  Manage / cancel:"
+  },
+  "form": {
+    "name": "Name",
+    "namePh": "e.g. Netflix",
+    "amount": "Amount",
+    "amountPh": "9.99",
+    "currency": "Currency (ISO)",
+    "currencyPh": "USD",
+    "billingCycle": "Billing cycle",
+    "nextCharge": "Next charge",
+    "remindMe": "Remind me",
+    "notes": "Notes",
+    "notesPh": "Optional",
+    "save": "Save",
+    "markRenewed": "Mark as renewed",
+    "delete": "Delete",
+    "goBack": "Go back",
+    "errorName": "Please enter a name.",
+    "errorAmount": "Please enter a valid amount.",
+    "cancelUrl": "Manage or cancel (link)",
+    "cancelUrlHint": "Paste the provider’s subscription or account page (https). SubRadar Max does not cancel for you — this only opens the link.",
+    "cancelUrlPh": "https://…",
+    "openCancelLink": "Open in browser",
+    "errorCancelUrl": "Enter a valid http(s) URL, or leave blank."
+  },
+  "edit": {
+    "loading": "Loading…",
+    "notFound": "This renewal was not found.",
+    "deleteTitle": "Delete renewal?",
+    "cancel": "Cancel"
+  },
+  "paywall": {
+    "iapDisabledTitle": "Subscriptions",
+    "iapDisabledBody": "In-app purchases are not enabled in this build. All features are included.",
+    "title": "SubRadar Max Pro",
+    "subtitle": "Unlimited renewals, reminders, and export. Data stays on your device.",
+    "bullet1": "• Track every subscription",
+    "bullet2": "• Local reminders before charges",
+    "bullet3": "• Export your list from Settings",
+    "expoWarn": "Expo Go cannot load real products. Create a dev build (expo run / EAS) or use Settings → Simulate Pro in development.",
+    "loadingPlans": "Loading plans… If this hangs, confirm IAP products exist in App Store Connect / Play Console and match IDs: %{ids}.",
+    "restore": "Restore purchases",
+    "close": "Close",
+    "purchaseFailed": "Purchase failed"
+  },
+  "notification": {
+    "title": "Renewal reminder",
+    "body": "%{name} renews on %{date}."
+  },
+  "notifications": {
+    "firstSaveTitle": "Allow reminders?",
+    "firstSaveMessage": "We’ll send a local notification before each charge. You can change this anytime in Settings.",
+    "firstSaveContinue": "Continue",
+    "firstSaveLater": "Not now",
+    "scheduleIncomplete": "Some reminders could not be scheduled.",
+    "retrySchedule": "Retry"
+  }
+}

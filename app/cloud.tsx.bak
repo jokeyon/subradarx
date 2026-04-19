@@ -1,0 +1,213 @@
+import { useRouter } from 'expo-router';
+import { useCallback, useEffect, useState } from 'react';
+import {
+  ActivityIndicator,
+  Alert,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
+import { useI18n } from '../contexts/I18nContext';
+import { useSubRadar } from '../contexts/SubRadarContext';
+import { authLogin, authRegister, getApiBaseUrl, syncRenewalsPull, syncRenewalsPush } from '../lib/api';
+import { getApiToken, setApiToken } from '../lib/authToken';
+import { saveRenewals } from '../lib/storage';
+
+export default function CloudScreen() {
+  const router = useRouter();
+  const { t } = useI18n();
+  const { renewals, refresh } = useSubRadar();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [mode, setMode] = useState<'login' | 'register'>('login');
+  const [token, setToken] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [boot, setBoot] = useState(true);
+
+  useEffect(() => {
+    void (async () => {
+      const t0 = await getApiToken();
+      setToken(t0);
+      setBoot(false);
+    })();
+  }, []);
+
+  const onAuth = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res =
+        mode === 'login'
+          ? await authLogin(email.trim(), password)
+          : await authRegister(email.trim(), password);
+      await setApiToken(res.token);
+      setToken(res.token);
+      Alert.alert(t('common.hint'), t('cloud.authOk'));
+    } catch (e) {
+      Alert.alert(t('cloud.authFailTitle'), e instanceof Error ? e.message : 'Error');
+    } finally {
+      setLoading(false);
+    }
+  }, [email, password, mode, t]);
+
+  const onLogout = useCallback(async () => {
+    await setApiToken(null);
+    setToken(null);
+  }, []);
+
+  const onPush = useCallback(async () => {
+    if (!token) return;
+    setLoading(true);
+    try {
+      await syncRenewalsPush(token, renewals);
+      Alert.alert(t('common.hint'), t('cloud.pushOk'));
+    } catch (e) {
+      Alert.alert(t('cloud.syncFailTitle'), e instanceof Error ? e.message : 'Error');
+    } finally {
+      setLoading(false);
+    }
+  }, [token, renewals, t]);
+
+  const onPull = useCallback(async () => {
+    if (!token) return;
+    setLoading(true);
+    try {
+      const list = await syncRenewalsPull(token);
+      await saveRenewals(list);
+      await refresh();
+      Alert.alert(t('common.hint'), t('cloud.pullOk'));
+    } catch (e) {
+      Alert.alert(t('cloud.syncFailTitle'), e instanceof Error ? e.message : 'Error');
+    } finally {
+      setLoading(false);
+    }
+  }, [token, refresh, t]);
+
+  if (boot) {
+    return (
+      <View style={styles.center}>
+        <ActivityIndicator color="#A5B4FC" />
+      </View>
+    );
+  }
+
+  return (
+    <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
+      <Text style={styles.title}>{t('cloud.title')}</Text>
+      <Text style={styles.muted}>{t('cloud.apiUrl', { url: getApiBaseUrl() })}</Text>
+
+      {!token ? (
+        <View style={styles.card}>
+          <Text style={styles.label}>{t('cloud.email')}</Text>
+          <TextInput
+            style={styles.input}
+            autoCapitalize="none"
+            keyboardType="email-address"
+            value={email}
+            onChangeText={setEmail}
+            placeholder="you@example.com"
+            placeholderTextColor="#64748B"
+          />
+          <Text style={styles.label}>{t('cloud.password')}</Text>
+          <TextInput
+            style={styles.input}
+            secureTextEntry
+            value={password}
+            onChangeText={setPassword}
+            placeholder="••••••••"
+            placeholderTextColor="#64748B"
+          />
+          <Pressable
+            style={[styles.button, loading && styles.buttonDisabled]}
+            disabled={loading}
+            onPress={() => void onAuth()}
+          >
+            <Text style={styles.buttonText}>
+              {mode === 'login' ? t('cloud.signIn') : t('cloud.signUp')}
+            </Text>
+          </Pressable>
+          <Pressable onPress={() => setMode(mode === 'login' ? 'register' : 'login')}>
+            <Text style={styles.link}>
+              {mode === 'login' ? t('cloud.switchRegister') : t('cloud.switchLogin')}
+            </Text>
+          </Pressable>
+        </View>
+      ) : (
+        <View style={styles.card}>
+          <Text style={styles.connected}>{t('cloud.signedIn')}</Text>
+          <Pressable
+            style={[styles.buttonSecondary, loading && styles.buttonDisabled]}
+            disabled={loading}
+            onPress={() => void onPush()}
+          >
+            <Text style={styles.buttonSecondaryText}>{t('cloud.push')}</Text>
+          </Pressable>
+          <Pressable
+            style={[styles.buttonSecondary, loading && styles.buttonDisabled]}
+            disabled={loading}
+            onPress={() => void onPull()}
+          >
+            <Text style={styles.buttonSecondaryText}>{t('cloud.pull')}</Text>
+          </Pressable>
+          <Pressable onPress={() => void onLogout()}>
+            <Text style={styles.link}>{t('cloud.signOut')}</Text>
+          </Pressable>
+        </View>
+      )}
+
+      <Pressable style={styles.back} onPress={() => router.back()}>
+        <Text style={styles.backText}>{t('cloud.back')}</Text>
+      </Pressable>
+    </ScrollView>
+  );
+}
+
+const styles = StyleSheet.create({
+  screen: { flex: 1, backgroundColor: '#0B1220' },
+  content: { padding: 16, paddingBottom: 40 },
+  center: { flex: 1, backgroundColor: '#0B1220', justifyContent: 'center', alignItems: 'center' },
+  title: { color: '#F8FAFC', fontSize: 22, fontWeight: '700', marginBottom: 8 },
+  muted: { color: '#64748B', fontSize: 12, marginBottom: 16, lineHeight: 18 },
+  card: {
+    backgroundColor: '#111827',
+    borderRadius: 14,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: '#1E293B',
+    gap: 10,
+  },
+  label: { color: '#94A3B8', fontSize: 13, fontWeight: '600' },
+  input: {
+    backgroundColor: '#0F172A',
+    borderWidth: 1,
+    borderColor: '#334155',
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    color: '#E2E8F0',
+    fontSize: 16,
+  },
+  button: {
+    backgroundColor: '#6366F1',
+    paddingVertical: 12,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  buttonDisabled: { opacity: 0.6 },
+  buttonText: { color: '#fff', fontWeight: '700', fontSize: 16 },
+  buttonSecondary: {
+    borderWidth: 1,
+    borderColor: '#334155',
+    paddingVertical: 12,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  buttonSecondaryText: { color: '#E2E8F0', fontWeight: '600' },
+  link: { color: '#A5B4FC', textAlign: 'center', marginTop: 8, fontWeight: '600' },
+  connected: { color: '#4ADE80', fontWeight: '700', marginBottom: 8 },
+  back: { marginTop: 24, alignItems: 'center' },
+  backText: { color: '#94A3B8', fontSize: 15 },
+});
