@@ -9,7 +9,7 @@ const EAS_PROJECT_ID = process.env.EAS_PROJECT_ID || 'f5858867-d2a0-4c97-9c87-6d
 module.exports = {
   expo: {
     name: 'subradax',
-    slug: 'subradax',
+    slug: 'subradar',
     version: '1.0.0',
     /** EAS Update: OTA 与商店包用同一 runtime；改 `version` 后需重新 eas build。 */
     runtimeVersion: { policy: 'appVersion' },
