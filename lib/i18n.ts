@@ -1,7 +1,7 @@
 import * as Localization from 'expo-localization';
 import { I18n } from 'i18n-js';
-import en from '../locales/en.json';
-import zh from '../locales/zh.json';
+import en from '@/locales/en.json';
+import zh from '@/locales/zh.json';
 import type { AppLocalePreference } from './localePreference';
 
 export const i18n = new I18n({ en, zh });

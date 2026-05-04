@@ -13,14 +13,14 @@ import {
   setI18nLocale,
   systemLocaleToApp,
   type AppLocale,
-} from '../lib/i18n';
+} from '@/lib/i18n';
 import {
   getLocalePreference,
   setLocalePreference,
   type AppLocalePreference,
-} from '../lib/localePreference';
-import { rescheduleRenewalNotifications } from '../lib/notifications';
-import { loadRenewals } from '../lib/storage';
+} from '@/lib/localePreference';
+import { rescheduleRenewalNotifications } from '@/lib/notifications';
+import { loadRenewals } from '@/lib/storage';
 
 type I18nContextValue = {
   t: (key: string, options?: Record<string, string | number>) => string;
@@ -67,10 +67,7 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     await resyncNotificationsForLanguage();
   }, []);
 
-  const t = useCallback(
-    (key: string, options?: Record<string, string | number>) => i18n.t(key, options),
-    [locale],
-  );
+  const t = useCallback((key: string, options?: Record<string, string | number>) => i18n.t(key, options), []);
 
   const value = useMemo(
     () => ({ t, locale, languagePreference, setLanguagePreference }),

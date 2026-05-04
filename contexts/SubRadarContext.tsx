@@ -8,8 +8,8 @@ import React, {
 } from 'react';
 import { PermissionStatus } from 'expo-modules-core';
 import { Alert, Platform } from 'react-native';
-import { FREE_LIMIT, IAP_ENABLED } from '../lib/constants';
-import { t } from '../lib/i18n';
+import { FREE_LIMIT, IAP_ENABLED } from '@/lib/constants';
+import { t } from '@/lib/i18n';
 import {
   endIapConnection,
   fetchSubscriptionProducts,
@@ -21,14 +21,14 @@ import {
   requestSubscriptionPurchase,
   restorePurchases,
   type SubProduct,
-} from '../lib/iap';
+} from '@/lib/iap';
 import {
   getNotificationPermissionStatus,
   rescheduleRenewalNotifications,
   requestNotificationPermission,
-} from '../lib/notifications';
-import { loadDevProFlag, loadRenewals, saveRenewals, setDevProFlag } from '../lib/storage';
-import type { Renewal } from '../lib/types';
+} from '@/lib/notifications';
+import { loadDevProFlag, loadRenewals, saveRenewals, setDevProFlag } from '@/lib/storage';
+import type { Renewal } from '@/lib/types';
 
 type SubRadarContextValue = {
   renewals: Renewal[];

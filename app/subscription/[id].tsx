@@ -16,11 +16,14 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { useI18n } from '../../contexts/I18nContext';
-import { useSubRadar } from '../../contexts/SubRadarContext';
-import { advanceNextCharge } from '../../lib/renewalMath';
-import type { BillingCycle } from '../../lib/types';
-import { looksLikeHttpUrl } from '../../lib/urlUtils';
+import { CurrencyPickerField } from '@/components/CurrencyPickerField';
+import { useI18n } from '@/contexts/I18nContext';
+import { useSubRadar } from '@/contexts/SubRadarContext';
+import { advanceNextCharge } from '@/lib/renewalMath';
+import type { BillingCycle } from '@/lib/types';
+import { looksLikeHttpUrl } from '@/lib/urlUtils';
+import { normalizeCurrencyCodeForIntl } from '@/lib/formatCurrency';
+import { intlLocaleTag } from '@/lib/formatDates';
 
 const cycles: BillingCycle[] = ['weekly', 'monthly', 'yearly'];
 const reminderValues = [0, 1, 3, 7] as const;
@@ -44,7 +47,8 @@ export default function EditRenewalScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const navigation = useNavigation();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
+  const intlTag = intlLocaleTag(locale);
   const { renewals, updateRenewal, deleteRenewal, loading } = useSubRadar();
 
   const existing = useMemo(() => renewals.find((r) => r.id === id), [renewals, id]);
@@ -167,7 +171,7 @@ export default function EditRenewalScreen() {
       ...existing,
       name: trimmed,
       amount: n,
-      currencyCode: currencyCode.trim().toUpperCase() || 'USD',
+      currencyCode: normalizeCurrencyCodeForIntl(currencyCode),
       billingCycle: cycle,
       nextChargeDate: format(startOfDay(next), 'yyyy-MM-dd'),
       reminderDays,
@@ -238,12 +242,13 @@ export default function EditRenewalScreen() {
         placeholderTextColor="#64748B"
       />
       <Text style={styles.label}>{t('form.currency')}</Text>
-      <TextInput
-        style={styles.input}
-        autoCapitalize="characters"
+      <CurrencyPickerField
         value={currencyCode}
-        onChangeText={setCurrencyCode}
-        placeholderTextColor="#64748B"
+        onChange={setCurrencyCode}
+        localeTag={intlTag}
+        title={t('form.currencyPickTitle')}
+        dismissLabel={t('common.dismiss')}
+        triggerStyle={styles.input}
       />
       <Text style={styles.label}>{t('form.billingCycle')}</Text>
       <View style={styles.chips}>

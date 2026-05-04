@@ -1,25 +1,4 @@
-import * as SecureStore from 'expo-secure-store';
-
-const KEY = 'subradax_api_token';
-
-// DISABLED - No cloud sync, no API token needed
-// export async function getApiToken(): Promise<string | null> {
-//   try {
-//     return await SecureStore.getItemAsync(KEY);
-//   } catch {
-//     return null;
-//   }
-// }
-
-// export async function setApiToken(token: string | null): Promise<void> {
-//   if (token === null) {
-//     await SecureStore.deleteItemAsync(KEY);
-//     return;
-//   }
-//   await SecureStore.setItemAsync(KEY, token);
-// }
-
-// Placeholder functions to avoid breaking imports
+/** Cloud sync off — stubs keep call sites stable; restore SecureStore + KEY when API ships. */
 export async function getApiToken(): Promise<null> {
   return null;
 }

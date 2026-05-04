@@ -1,6 +1,6 @@
 # subradax (Expo / React Native)
 
-Cross-platform subscription tracker: track renewals locally, local notifications, **free up to 3 items**, **Premium** via `react-native-iap` (product ID **`subradarpro`**, see `lib/constants.ts`).
+Cross-platform subscription tracker: track renewals locally, local notifications, **free up to 3 items**, **Premium** via `react-native-iap` (product IDs **`subradarpro_monthly`** / **`subradarpro_yearly`**, see `lib/constants.ts`; base pricing **$3.99/mo** and **$39.99/yr** USA — set in App Store Connect / Play Console).
 
 ## Why this exists
 
@@ -44,9 +44,10 @@ You can do this from **Windows**: the iOS `.ipa` is built on **EAS cloud Macs**.
 4. **Agreements, Tax, and Banking**: complete **Paid Applications** only when you enable paid subscriptions (see below).
 5. **In-app purchases (optional on first release)**  
    - By default **`IAP_ENABLED` is off** (no `EXPO_PUBLIC_IAP_ENABLED` in the build): the app does **not** call StoreKit, and **all features** (unlimited renewals + export) are available — you can ship **without** creating IAP in App Store Connect.  
-   - When you are ready: create an **auto-renewable** product with ID **`subradarpro`** (must match `lib/constants.ts`), complete metadata and pricing, set **`EXPO_PUBLIC_IAP_ENABLED=1`** in EAS build env (or `.env` for local builds), rebuild, then associate the IAP with the app version for review.
-6. **Assets**: use a real **1024×1024** `assets/icon.png` (no transparency for store), plus screenshots and metadata in ASC for the version you submit.
-7. **Version**: user-facing version is `expo.version` in `app.config.js` (e.g. `1.0.0`). Each App Store upload needs a **higher `ios.buildNumber`** (same file) — EAS **`autoIncrement`** is not available with **`app.config.js`**, so increment it manually (e.g. `2`, `3`, …) before each store build. Bump **`version`** when you ship a new marketing version.
+   - When you are ready: create **two** auto-renewable subscriptions in the **same subscription group**, with IDs **`subradarpro_monthly`** and **`subradarpro_yearly`** (must match `lib/constants.ts`), set USA pricing to **$3.99/month** and **$39.99/year** (other regions via pricing tiers), add any **introductory offers** in ASC, set **`EXPO_PUBLIC_IAP_ENABLED=1`** in EAS build env (or `.env` for local builds), rebuild, then associate the IAPs with the app version for review.
+6. **Gmail scan (optional):** off by default. The **「来自邮件」** screen always supports **paste + iOS Share extension**. To ship **Gmail OAuth + scan**, set **`EXPO_PUBLIC_GMAIL_IMPORT_ENABLED=1`**, configure **`EXPO_PUBLIC_GOOGLE_*`** client IDs, test on a real iOS build, then update App Store privacy answers — see `lib/constants.ts` (`GMAIL_IMPORT_ENABLED`).
+7. **Assets**: use a real **1024×1024** `assets/icon.png` (no transparency for store), plus screenshots and metadata in ASC for the version you submit.
+8. **Version**: user-facing version is `expo.version` in `app.config.js` (e.g. `1.0.0`). Each App Store upload needs a **higher `ios.buildNumber`** (same file) — EAS **`autoIncrement`** is not available with **`app.config.js`**, so increment it manually (e.g. `2`, `3`, …) before each store build. Bump **`version`** when you ship a new marketing version.
 
 **Build for the store**
 
@@ -79,10 +80,11 @@ Optional: add `appleId` and `ascAppId` under `submit.production.ios` in **`eas.j
 
 - **iOS**: Bundle ID `com.jokeyon.subradar` (change in `app.config.js` to match your identifiers).
 - **Android**: `com.jokeyon.subradar`.
-- Create subscription products with IDs **exactly**:
-  - `subradarpro`
+- Create **iOS** subscription products in App Store Connect with IDs **exactly**:
+  - `subradarpro_monthly` (monthly)
+  - `subradarpro_yearly` (yearly)
 
-Google Play **Billing v5+** may require **base plan / offer** setup; if Android purchase fails, configure offers in Play Console and adjust `requestSubscription` per `react-native-iap` Android docs.
+**Android:** in-app subscription is **not enabled** in this app version; the Play build still runs with the **free tier** when `EXPO_PUBLIC_IAP_ENABLED=1` (same as iOS non-subscribers).
 
 ## Stack
 

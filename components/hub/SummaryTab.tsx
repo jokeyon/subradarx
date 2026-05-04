@@ -1,9 +1,10 @@
 import { useMemo } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import { useI18n } from '../../contexts/I18nContext';
-import { useSubRadar } from '../../contexts/SubRadarContext';
-import { intlLocaleTag } from '../../lib/formatDates';
-import { monthlyEquivalent } from '../../lib/renewalMath';
+import { useI18n } from '@/contexts/I18nContext';
+import { useSubRadar } from '@/contexts/SubRadarContext';
+import { formatCurrencyAmount, normalizeCurrencyCodeForIntl } from '@/lib/formatCurrency';
+import { intlLocaleTag } from '@/lib/formatDates';
+import { monthlyEquivalent } from '@/lib/renewalMath';
 
 export function SummaryTab() {
   const { t, locale } = useI18n();
@@ -13,7 +14,7 @@ export function SummaryTab() {
   const byCurrency = useMemo(() => {
     const m: Record<string, number> = {};
     for (const r of renewals) {
-      const code = r.currencyCode || 'USD';
+      const code = normalizeCurrencyCodeForIntl(r.currencyCode);
       m[code] = (m[code] ?? 0) + monthlyEquivalent(r.amount, r.billingCycle);
     }
     return m;
@@ -36,10 +37,7 @@ export function SummaryTab() {
         <View key={code} style={styles.row}>
           <Text style={styles.label}>{code}</Text>
           <Text style={styles.value}>
-            {(byCurrency[code] ?? 0).toLocaleString(intlTag, {
-              style: 'currency',
-              currency: code,
-            })}
+            {formatCurrencyAmount(byCurrency[code] ?? 0, code, intlTag)}
           </Text>
         </View>
       ))}
@@ -48,10 +46,7 @@ export function SummaryTab() {
         <View key={`y-${code}`} style={styles.row}>
           <Text style={styles.muted}>{code}</Text>
           <Text style={styles.mutedValue}>
-            {((byCurrency[code] ?? 0) * 12).toLocaleString(intlTag, {
-              style: 'currency',
-              currency: code,
-            })}
+            {formatCurrencyAmount((byCurrency[code] ?? 0) * 12, code, intlTag)}
           </Text>
         </View>
       ))}

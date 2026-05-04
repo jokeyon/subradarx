@@ -7,6 +7,7 @@ import { useMemo, useState } from 'react';
 import {
   Alert,
   Linking,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -14,12 +15,13 @@ import {
   Text,
   View,
 } from 'react-native';
-import { useI18n } from '../../contexts/I18nContext';
-import { useSubRadar } from '../../contexts/SubRadarContext';
-import { FEEDBACK_MAILTO, FREE_LIMIT, IAP_ENABLED } from '../../lib/constants';
-import { formatMediumDate, intlLocaleTag } from '../../lib/formatDates';
-import { isExpoGo } from '../../lib/iap';
-import { requestNotificationPermission } from '../../lib/notifications';
+import { useI18n } from '@/contexts/I18nContext';
+import { useSubRadar } from '@/contexts/SubRadarContext';
+import { FEEDBACK_MAILTO, FREE_LIMIT, IAP_ENABLED } from '@/lib/constants';
+import { formatCurrencyAmount } from '@/lib/formatCurrency';
+import { formatMediumDate, intlLocaleTag } from '@/lib/formatDates';
+import { isExpoGo } from '@/lib/iap';
+import { requestNotificationPermission } from '@/lib/notifications';
 
 export default function SettingsScreen() {
   const router = useRouter();
@@ -40,10 +42,7 @@ export default function SettingsScreen() {
     const lines = [t('export.header', { date: formatMediumDate(new Date(), locale) }), ''];
     const sorted = [...renewals].sort((a, b) => a.nextChargeDate.localeCompare(b.nextChargeDate));
     for (const r of sorted) {
-      const price = r.amount.toLocaleString(intlTag, {
-        style: 'currency',
-        currency: r.currencyCode || 'USD',
-      });
+      const price = formatCurrencyAmount(r.amount, r.currencyCode, intlTag);
       const d = parse(r.nextChargeDate, 'yyyy-MM-dd', new Date());
       const cycleLabel =
         r.billingCycle === 'weekly' || r.billingCycle === 'monthly' || r.billingCycle === 'yearly'
@@ -128,6 +127,9 @@ export default function SettingsScreen() {
         {IAP_ENABLED ? (
           <>
             <Text style={styles.rowText}>{t('settings.planFree', { limit: FREE_LIMIT })}</Text>
+            {Platform.OS === 'android' && !isPro ? (
+              <Text style={styles.hint}>{t('settings.androidProNote')}</Text>
+            ) : null}
             {isPro ? (
               <Text style={styles.proOn}>{t('settings.proActive')}</Text>
             ) : (
@@ -172,8 +174,16 @@ export default function SettingsScreen() {
         {notifHint ? <Text style={styles.hint}>{notifHint}</Text> : null}
       </View>
 
+      <Text style={styles.section}>{t('settings.sectionEmailImport')}</Text>
+      <View style={styles.card}>
+        <Pressable style={styles.buttonSecondary} onPress={() => router.push('/email-import' as Href)}>
+          <Text style={styles.buttonSecondaryText}>{t('settings.emailImportOpen')}</Text>
+        </Pressable>
+      </View>
+
       <Text style={styles.section}>{t('settings.sectionExport')}</Text>
       <View style={styles.card}>
+        <Text style={styles.muted}>{t('settings.exportBackupHint')}</Text>
         <Pressable style={styles.buttonSecondary} onPress={() => void onExport()}>
           <Text style={styles.buttonSecondaryText}>{t('settings.exportBtn')}</Text>
         </Pressable>
@@ -194,7 +204,7 @@ export default function SettingsScreen() {
         <Text style={[styles.muted, styles.privacyGap]}>{t('settings.privacyNoAnalytics')}</Text>
       </View>
 
-      {IAP_ENABLED ? (
+      {IAP_ENABLED && Platform.OS === 'ios' ? (
         <Pressable style={styles.link} onPress={() => void restore()}>
           <Text style={styles.linkText}>{t('settings.restore')}</Text>
         </Pressable>

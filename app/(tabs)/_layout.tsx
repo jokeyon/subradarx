@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
-import { useI18n } from '../../contexts/I18nContext';
+import { useI18n } from '@/contexts/I18nContext';
 
 export default function TabsLayout() {
   const { t, locale } = useI18n();
@@ -23,7 +23,7 @@ export default function TabsLayout() {
           title: t('tabs.hub'),
           tabBarLabel: t('tabs.hub'),
           headerShown: false,
-          tabBarIcon: ({ color, size }) => <Ionicons name="layers-outline" color={color} size={size} />,
+          tabBarIcon: ({ color, size }) => <Ionicons name="wallet-outline" color={color} size={size} />,
         }}
       />
       <Tabs.Screen

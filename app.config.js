@@ -36,7 +36,7 @@ module.exports = {
       /** Must match a unique App ID you register (app.subradar.ios is taken globally). */
       bundleIdentifier: 'com.jokeyon.subradar',
       /** Bump this string before each App Store upload (EAS `autoIncrement` is incompatible with app.config.js). */
-      buildNumber: '6',
+      buildNumber: '7',
       infoPlist: {
         CFBundleDisplayName: 'subradax',
         ITSAppUsesNonExemptEncryption: false,
@@ -74,6 +74,24 @@ module.exports = {
         },
       ],
       'expo-secure-store',
+      'expo-web-browser',
+      [
+        'expo-share-extension',
+        {
+          activationRules: [{ type: 'text' }, { type: 'url', max: 1 }],
+          height: 400,
+          backgroundColor: { red: 11, green: 18, blue: 32, alpha: 255 },
+          excludedPackages: [
+            'expo-dev-client',
+            'expo-splash-screen',
+            'expo-updates',
+            'expo-font',
+            'expo-notifications',
+            'react-native-iap',
+          ],
+        },
+      ],
+      require('./plugins/withShareExtensionQueriesSchemes'),
     ],
     experiments: {
       typedRoutes: true,
@@ -83,8 +101,10 @@ module.exports = {
         /** @jokeyon/subradax — override with env on CI if needed */
         projectId: EAS_PROJECT_ID,
       },
-      /** subradax API (device/emulator: use LAN IP or tunnel, not localhost). */
-      apiUrl: process.env.EXPO_PUBLIC_API_URL || 'http://localhost:8787',
+      /** Google OAuth client IDs — create in Google Cloud Console (Gmail API + OAuth consent). Use env EXPO_PUBLIC_GOOGLE_* */
+      googleIosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID || '',
+      googleAndroidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID || '',
+      googleWebClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || '',
     },
   },
 };

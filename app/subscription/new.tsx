@@ -1,8 +1,8 @@
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useNavigation } from '@react-navigation/native';
-import { useRouter } from 'expo-router';
-import { format, startOfDay } from 'date-fns';
-import { useCallback, useLayoutEffect, useState } from 'react';
+import { useRouter, useLocalSearchParams } from 'expo-router';
+import { format, parse, startOfDay } from 'date-fns';
+import { useCallback, useEffect, useLayoutEffect, useState } from 'react';
 import {
   Alert,
   Platform,
@@ -13,9 +13,13 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { useI18n } from '../../contexts/I18nContext';
-import { useSubRadar } from '../../contexts/SubRadarContext';
-import type { BillingCycle } from '../../lib/types';
+import { CurrencyPickerField } from '@/components/CurrencyPickerField';
+import { useI18n } from '@/contexts/I18nContext';
+import { useSubRadar } from '@/contexts/SubRadarContext';
+import { intlLocaleTag } from '@/lib/formatDates';
+import { normalizeCurrencyCodeForIntl } from '@/lib/formatCurrency';
+import { markGmailMessageImported } from '@/lib/gmailImportStorage';
+import type { BillingCycle } from '@/lib/types';
 
 const cycles: BillingCycle[] = ['weekly', 'monthly', 'yearly'];
 const reminderValues = [0, 1, 3, 7] as const;
@@ -37,8 +41,18 @@ function reminderLabel(t: (k: string) => string, value: number): string {
 
 export default function NewRenewalScreen() {
   const router = useRouter();
+  const params = useLocalSearchParams<{
+    prefName?: string;
+    prefAmount?: string;
+    prefCurrency?: string;
+    prefNotes?: string;
+    prefNext?: string;
+    prefCycle?: string;
+    gmailMessageId?: string;
+  }>();
   const navigation = useNavigation();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
+  const intlTag = intlLocaleTag(locale);
   const { addRenewal } = useSubRadar();
   const [name, setName] = useState('');
   const [amount, setAmount] = useState('');
@@ -49,6 +63,19 @@ export default function NewRenewalScreen() {
   const [reminderDays, setReminderDays] = useState(3);
   const [notes, setNotes] = useState('');
   const [cancelUrl, setCancelUrl] = useState('');
+
+  useEffect(() => {
+    if (params.prefName) setName(String(params.prefName));
+    if (params.prefAmount) setAmount(String(params.prefAmount));
+    if (params.prefCurrency) setCurrencyCode(String(params.prefCurrency).toUpperCase());
+    if (params.prefNotes) setNotes(String(params.prefNotes));
+    if (params.prefNext && /^\d{4}-\d{2}-\d{2}$/.test(String(params.prefNext))) {
+      setNext(startOfDay(parse(String(params.prefNext), 'yyyy-MM-dd', new Date())));
+    }
+    if (params.prefCycle === 'weekly' || params.prefCycle === 'monthly' || params.prefCycle === 'yearly') {
+      setCycle(params.prefCycle);
+    }
+  }, [params.prefName, params.prefAmount, params.prefCurrency, params.prefNotes, params.prefNext, params.prefCycle]);
 
   const closeModal = useCallback(() => {
     if (router.canDismiss()) {
@@ -79,13 +106,15 @@ export default function NewRenewalScreen() {
     await addRenewal({
       name: trimmed,
       amount: n,
-      currencyCode: currencyCode.trim().toUpperCase() || 'USD',
+      currencyCode: normalizeCurrencyCodeForIntl(currencyCode),
       billingCycle: cycle,
       nextChargeDate: format(startOfDay(next), 'yyyy-MM-dd'),
       reminderDays,
       notes: notes.trim(),
       ...(url ? { cancelUrl: url } : {}),
     });
+    const gmid = params.gmailMessageId ? String(params.gmailMessageId) : '';
+    if (gmid) await markGmailMessageImported(gmid);
     closeModal();
   };
 
@@ -95,6 +124,9 @@ export default function NewRenewalScreen() {
       contentContainerStyle={styles.content}
       keyboardShouldPersistTaps="handled"
     >
+      <Pressable style={styles.smartImportLink} onPress={() => router.push('/email-import')}>
+        <Text style={styles.smartImportLinkText}>{t('renewals.addSmartImport')} →</Text>
+      </Pressable>
       <Text style={styles.label}>{t('form.name')}</Text>
       <TextInput
         style={styles.input}
@@ -113,13 +145,13 @@ export default function NewRenewalScreen() {
         onChangeText={setAmount}
       />
       <Text style={styles.label}>{t('form.currency')}</Text>
-      <TextInput
-        style={styles.input}
-        placeholder={t('form.currencyPh')}
-        placeholderTextColor="#64748B"
-        autoCapitalize="characters"
+      <CurrencyPickerField
         value={currencyCode}
-        onChangeText={setCurrencyCode}
+        onChange={setCurrencyCode}
+        localeTag={intlTag}
+        title={t('form.currencyPickTitle')}
+        dismissLabel={t('common.dismiss')}
+        triggerStyle={styles.input}
       />
       <Text style={styles.label}>{t('form.billingCycle')}</Text>
       <View style={styles.chips}>
@@ -207,6 +239,13 @@ export default function NewRenewalScreen() {
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: '#0B1220' },
   content: { padding: 16, paddingBottom: 40 },
+  smartImportLink: {
+    alignSelf: 'flex-start',
+    marginBottom: 4,
+    paddingVertical: 10,
+    paddingHorizontal: 4,
+  },
+  smartImportLinkText: { color: '#A5B4FC', fontSize: 14, fontWeight: '600' },
   label: { color: '#94A3B8', marginBottom: 6, marginTop: 12, fontSize: 13, fontWeight: '600' },
   fieldHint: { color: '#64748B', fontSize: 12, lineHeight: 17, marginBottom: 8, marginTop: -2 },
   input: {

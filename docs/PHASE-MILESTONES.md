@@ -68,7 +68,7 @@
 
 - [ ] **iOS**：首发 **美国区**（或美国为主；若全球上架，应用内限制或说明银行区域）。
 - [ ] **Android**：Play 上架策略与文案、**数据安全表单** 完成。
-- [ ] **IAP**：`subradarpro`（及后续 Play 商品）与 ASC/Play 配置一致；**TestFlight / 内测** 实机验证购买与恢复。
+- [ ] **IAP（仅 iOS）**：`subradarpro_monthly` / `subradarpro_yearly` 与 App Store Connect 一致；基准价 **$3.99/月**、**$39.99/年**（美区）；**TestFlight** 实机验证购买与恢复。
 
 ### 1.6 成功指标（建议首 8～12 周观测）
 

@@ -3,16 +3,17 @@ import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useLayoutEffect, useState } from 'react';
 import {
   ActivityIndicator,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
-import { useI18n } from '../contexts/I18nContext';
-import { useSubRadar } from '../contexts/SubRadarContext';
-import { IAP_ENABLED, SUBSCRIPTION_SKUS } from '../lib/constants';
-import { isExpoGo } from '../lib/iap';
+import { useI18n } from '@/contexts/I18nContext';
+import { useSubRadar } from '@/contexts/SubRadarContext';
+import { IAP_ENABLED, SUBSCRIPTION_SKUS } from '@/lib/constants';
+import { isExpoGo } from '@/lib/iap';
 
 export default function PaywallScreen() {
   const router = useRouter();
@@ -39,7 +40,7 @@ export default function PaywallScreen() {
   }, [navigation, t]);
 
   useEffect(() => {
-    if (IAP_ENABLED) void reloadProducts();
+    if (IAP_ENABLED && Platform.OS === 'ios') void reloadProducts();
   }, [reloadProducts]);
 
   useEffect(() => {
@@ -51,6 +52,18 @@ export default function PaywallScreen() {
       <View style={[styles.screen, styles.iapOffContent]}>
         <Text style={styles.title}>{t('paywall.iapDisabledTitle')}</Text>
         <Text style={styles.sub}>{t('paywall.iapDisabledBody')}</Text>
+        <Pressable style={styles.close} onPress={closeModal}>
+          <Text style={styles.closeText}>{t('paywall.close')}</Text>
+        </Pressable>
+      </View>
+    );
+  }
+
+  if (Platform.OS === 'android') {
+    return (
+      <View style={[styles.screen, styles.iapOffContent]}>
+        <Text style={styles.title}>{t('paywall.androidOnlyTitle')}</Text>
+        <Text style={styles.sub}>{t('paywall.androidOnlyBody')}</Text>
         <Pressable style={styles.close} onPress={closeModal}>
           <Text style={styles.closeText}>{t('paywall.close')}</Text>
         </Pressable>
@@ -108,6 +121,8 @@ export default function PaywallScreen() {
         </Pressable>
       ))}
 
+      {products.length > 0 ? <Text style={styles.pricingNote}>{t('paywall.pricingNote')}</Text> : null}
+
       <Pressable style={styles.restore} onPress={() => void restore()}>
         <Text style={styles.restoreText}>{t('paywall.restore')}</Text>
       </Pressable>
@@ -146,6 +161,7 @@ const styles = StyleSheet.create({
   planTitle: { color: '#F8FAFC', fontSize: 17, fontWeight: '700' },
   planDesc: { color: '#94A3B8', fontSize: 12, marginTop: 4, maxWidth: 220 },
   price: { color: '#EEF2FF', fontSize: 17, fontWeight: '800' },
+  pricingNote: { color: '#64748B', fontSize: 12, lineHeight: 17, marginTop: 14 },
   restore: { marginTop: 18, alignItems: 'center' },
   restoreText: { color: '#A5B4FC', fontWeight: '700' },
   err: { color: '#F87171', marginTop: 12, textAlign: 'center' },

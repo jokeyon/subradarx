@@ -11,9 +11,19 @@ export type SubProduct = {
   localizedPrice?: string;
 };
 
+/** Yearly first (better default for LTV), then monthly. Unknown IDs last. */
+function sortSubscriptionProducts(products: SubProduct[]): SubProduct[] {
+  const order: string[] = [PRODUCT_IDS.yearly, PRODUCT_IDS.monthly];
+  const rank = (id: string) => {
+    const i = order.indexOf(id);
+    return i === -1 ? order.length : i;
+  };
+  return [...products].sort((a, b) => rank(a.productId) - rank(b.productId));
+}
+
 const SKUS = Platform.select({
   ios: [...SUBSCRIPTION_SKUS],
-  android: [...SUBSCRIPTION_SKUS],
+  android: [],
   default: [],
 })!;
 
@@ -21,9 +31,11 @@ export function isExpoGo(): boolean {
   return Constants.appOwnership === 'expo';
 }
 
+/** In-app subscriptions: **iOS (App Store) only** for now. */
 export function iapSupported(): boolean {
   if (!IAP_ENABLED) return false;
   if (Platform.OS === 'web') return false;
+  if (Platform.OS === 'android') return false;
   if (isExpoGo()) return false;
   return true;
 }
@@ -54,14 +66,20 @@ export async function fetchSubscriptionProducts(): Promise<SubProduct[]> {
   if (!iapSupported()) return [];
   try {
     const subs = await RNIap.getSubscriptions({ skus: SKUS });
-    return subs as SubProduct[];
+    return sortSubscriptionProducts(subs as SubProduct[]);
   } catch {
     return [];
   }
 }
 
 export async function requestSubscriptionPurchase(sku: string): Promise<void> {
-  if (!iapSupported()) throw new Error('Purchases require a dev/production build (not Expo Go).');
+  if (!iapSupported()) {
+    throw new Error(
+      Platform.OS === 'android'
+        ? 'Subscriptions are available on iOS (App Store) only.'
+        : 'Purchases require a dev/production build (not Expo Go).',
+    );
+  }
   await RNIap.requestSubscription({ sku });
 }
 

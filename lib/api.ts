@@ -1,5 +1,4 @@
 import Constants from 'expo-constants';
-import type { Renewal } from './types';
 
 export function getApiBaseUrl(): string {
   const fromExtra = Constants.expoConfig?.extra as { apiUrl?: string } | undefined;

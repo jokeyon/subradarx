@@ -13,7 +13,7 @@
 | Bundle ID | `com.jokeyon.subradar` |
 | SKU | 与创建 App 时一致即可（仅内部用） |
 | 当前营销版本 | 1.0.0（与 `app.config.js` 中 `version` 一致） |
-| 自动续期订阅 ID | `subradarpro`（仅当 `EXPO_PUBLIC_IAP_ENABLED=1` 打包时启用；与 `lib/constants.ts` 一致） |
+| 自动续期订阅 ID | `subradarpro_monthly`（月付）、`subradarpro_yearly`（年付），须在同一订阅组；基准价 **US$3.99/月**、**US$39.99/年**（仅当 `EXPO_PUBLIC_IAP_ENABLED=1` 打包时启用；与 `lib/constants.ts` 一致）。首购/限时优惠在 ASC 中单独配置。 |
 | 功能档位 | **默认构建（未启用 IAP）**：不限条数 + 导出全开放。启用 IAP 后可恢复「免费 3 条 / Pro」逻辑（见 `README`）。 |
 
 ---
@@ -130,7 +130,7 @@ Test account: not required — no login; data is stored locally.
 
 This build does not include In-App Purchases. All features (unlimited renewal entries and export) are available without purchase.
 
-If you later receive a build with IAP enabled (EXPO_PUBLIC_IAP_ENABLED), there will be an auto-renewable subscription with product ID: subradarpro — use Sandbox to test purchase/restore.
+If you later receive a build with IAP enabled (`EXPO_PUBLIC_IAP_ENABLED`), there will be auto-renewable subscriptions with product IDs **`subradarpro_monthly`** and **`subradarpro_yearly`** — use Sandbox to test purchase/restore.
 
 Notifications: optional — local renewal reminders only, if the user allows notifications in iOS Settings.
 

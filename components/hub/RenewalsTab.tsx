@@ -12,10 +12,12 @@ import {
   Text,
   View,
 } from 'react-native';
-import { useI18n } from '../../contexts/I18nContext';
-import { useSubRadar } from '../../contexts/SubRadarContext';
-import { formatMediumDate, intlLocaleTag } from '../../lib/formatDates';
-import { getNotificationPermissionStatus } from '../../lib/notifications';
+import { AddRenewalChoiceModal } from '@/components/hub/AddRenewalChoiceModal';
+import { useI18n } from '@/contexts/I18nContext';
+import { useSubRadar } from '@/contexts/SubRadarContext';
+import { formatCurrencyAmount } from '@/lib/formatCurrency';
+import { formatMediumDate, intlLocaleTag } from '@/lib/formatDates';
+import { getNotificationPermissionStatus } from '@/lib/notifications';
 
 function cycleLabel(
   t: (k: string) => string,
@@ -37,6 +39,7 @@ export function RenewalsTab() {
   } = useSubRadar();
   const intlTag = intlLocaleTag(locale);
   const [notifStatus, setNotifStatus] = useState<PermissionStatus>(PermissionStatus.GRANTED);
+  const [addMenuOpen, setAddMenuOpen] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -106,17 +109,18 @@ export function RenewalsTab() {
             onPress={() => router.push(`/subscription/${item.id}`)}
           >
             <View style={styles.cardLeft}>
-              <Text style={styles.cardTitle}>{item.name}</Text>
-              <Text style={styles.cardSub}>{cycleLabel(t, item.billingCycle)}</Text>
+              <Text style={styles.cardTitle} numberOfLines={2} ellipsizeMode="tail">
+                {item.name}
+              </Text>
+              <Text style={styles.cardSubLeft} numberOfLines={1} ellipsizeMode="tail">
+                {cycleLabel(t, item.billingCycle)}
+              </Text>
             </View>
             <View style={styles.cardRight}>
-              <Text style={styles.cardPrice}>
-                {item.amount.toLocaleString(intlTag, {
-                  style: 'currency',
-                  currency: item.currencyCode || 'USD',
-                })}
+              <Text style={styles.cardPrice} numberOfLines={1} ellipsizeMode="tail">
+                {formatCurrencyAmount(item.amount, item.currencyCode, intlTag)}
               </Text>
-              <Text style={styles.cardSub}>
+              <Text style={styles.cardSubRight} numberOfLines={1} ellipsizeMode="tail">
                 {t('renewals.next', {
                   date: formatMediumDate(parse(item.nextChargeDate, 'yyyy-MM-dd', new Date()), locale),
                 })}
@@ -132,11 +136,22 @@ export function RenewalsTab() {
             router.push('/paywall');
             return;
           }
-          router.push('/subscription/new');
+          setAddMenuOpen(true);
         }}
       >
         <Text style={styles.fabText}>{t('renewals.add')}</Text>
       </Pressable>
+
+      <AddRenewalChoiceModal
+        visible={addMenuOpen}
+        onClose={() => setAddMenuOpen(false)}
+        onManual={() => router.push('/subscription/new')}
+        onSmartImport={() => router.push('/email-import')}
+        title={t('renewals.addChooseTitle')}
+        manualLabel={t('renewals.addManual')}
+        smartImportLabel={t('renewals.addSmartImport')}
+        dismissAccessibilityLabel={t('common.dismiss')}
+      />
     </View>
   );
 }
@@ -151,19 +166,23 @@ const styles = StyleSheet.create({
   card: {
     marginHorizontal: 16,
     marginTop: 12,
-    padding: 16,
+    height: 96,
+    paddingHorizontal: 16,
     borderRadius: 14,
     backgroundColor: '#111827',
     borderWidth: 1,
     borderColor: '#1E293B',
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'center',
+    overflow: 'hidden',
   },
   cardPressed: { opacity: 0.85 },
-  cardLeft: { flex: 1, paddingRight: 12 },
-  cardRight: { alignItems: 'flex-end' },
-  cardTitle: { color: '#F8FAFC', fontSize: 17, fontWeight: '600' },
-  cardSub: { color: '#94A3B8', fontSize: 13, marginTop: 4 },
+  cardLeft: { flex: 1, minWidth: 0, paddingRight: 12, justifyContent: 'center' },
+  cardRight: { alignItems: 'flex-end', justifyContent: 'center', flexShrink: 0, maxWidth: '42%' },
+  cardTitle: { color: '#F8FAFC', fontSize: 17, fontWeight: '600', lineHeight: 22 },
+  cardSubLeft: { color: '#94A3B8', fontSize: 13, marginTop: 2, lineHeight: 18 },
+  cardSubRight: { color: '#94A3B8', fontSize: 13, marginTop: 4, lineHeight: 18 },
   cardPrice: { color: '#E2E8F0', fontSize: 16, fontWeight: '600' },
   fab: {
     margin: 16,
