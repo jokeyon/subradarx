@@ -195,9 +195,13 @@ export function nameFromSubject(subject: string): string {
 /** Inferred tag when paste looks like SMS / short billing text but no keyword hit. */
 const INFERRED_SMS_KEYWORD = '短信账单';
 
+function usdOrForeignMoneySnip(blob: string): boolean {
+  return /\$\s*[\d.,]+|[\d.,]+\s*(USD|EUR|GBP)|£\s*[\d.,]+/.test(blob);
+}
+
 function looksLikeCnSmsBill(blob: string): boolean {
   if (blob.length > 480) return false;
-  if (!/元|块(?:钱)?/i.test(blob)) return false;
+  if (!/元|块(?:钱)?/i.test(blob) && !usdOrForeignMoneySnip(blob)) return false;
   if (/[【].{1,40}[】]/.test(blob)) return true;
   if (
     /(尊敬|您好|用户|尾号|账户|银行卡|支付宝|微信|招行|工行|建行|农行|中行|移动|联通|电信|美团|爱奇艺|腾讯视频|优酷|bilibili|B站)/i.test(
@@ -221,6 +225,19 @@ function renewalFailureNoAmountHeuristic(blob: string): boolean {
   return /(续费失败|自动续费失败|续费未成功|扣费失败|将停止|停止服务|服务到期|请及时续费|手动续费|renewal failed|auto[- ]?renew\w* failed)/i.test(
     blob,
   );
+}
+
+/** Share / SMS often has only a short link + one line, or link + billing words — still route to Smart Import card. */
+function inferKeywordFromLinkAndShortPaste(blob: string): boolean {
+  const lines = blob.split(/\r?\n/).filter((l) => l.trim().length > 0);
+  if (lines.length > 10 || blob.length > 800) return false;
+  const billingish =
+    /(元|块(?:钱)?|扣|付|订|费|账|款|续|免密|代扣|订阅|会员|尊敬|尾号|支|付宝|微|信|银行|¥|￥|人民币|RMB|\$\s*[\d.,]+|charged|subscription|renew|invoice|bill|billing|payment|autopay)/i.test(
+      blob,
+    );
+  if (billingish && blob.length <= 640) return true;
+  if (blob.length <= 320 && lines.length <= 4) return true;
+  return false;
 }
 
 function internalParseSubscriptionBlob(opts: {
@@ -253,6 +270,12 @@ function internalParseSubscriptionBlob(opts: {
   if (!kw && ac && allowSmsInfer && looksLikeCnSmsBill(blob)) {
     kw = INFERRED_SMS_KEYWORD;
   }
+
+  const cancelUrl = extractFirstHttpUrl(blob);
+  if (!kw && cancelUrl && allowSmsInfer && inferKeywordFromLinkAndShortPaste(blob)) {
+    kw = INFERRED_SMS_KEYWORD;
+  }
+
   const nextFound = extractNextChargeDate(blob, reference);
   if (!ac && kw && nextFound && renewalFailureNoAmountHeuristic(blob)) {
     ac = { amount: 0, currencyCode: 'CNY' };
@@ -263,8 +286,6 @@ function internalParseSubscriptionBlob(opts: {
     const brand = fromHeader.replace(/<[^>]+>/, '').split('@')[0]?.trim();
     if (brand && name.length < 4) name = brand.slice(0, 80);
   }
-
-  const cancelUrl = extractFirstHttpUrl(blob);
 
   const structured: SubscriptionStructuredJsonV1 = {
     v: 1,
