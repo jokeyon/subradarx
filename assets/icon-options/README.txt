@@ -1,3 +1,11 @@
+2026-02 batch (subradarx re-design — AI, pick by eye, 上架前对照下方清单):
+  subradarx-icon-01-orbit-indigo.png   — 靛蓝底 + 粗轨道白环与小点，续费/雷达
+  subradarx-icon-02-stack-warm.png   — 桃米底 + 三色厚圆角横条叠放，订阅堆叠
+  subradarx-icon-03-monogram-s.png     — 炭灰底 + 粗体 S 形双丝带，品牌首字母
+  subradarx-icon-04-bell-calendar.png  — 淡紫白渐变 + 粗铃铛 + 一角日历页，提醒
+
+--------------------------------------------------------------------------------
+
 New set — four distinct design directions (2026 batch, AI — review against checklist below):
   new-2026-A-renewal-loop.png      — A 周期/循环：粗环形箭头，续费隐喻，青绿 + 暖白底
   new-2026-B-subscription-stack.png — B 层级：三条厚圆角横条叠放，订阅/方案堆叠，赭石 + 桃底
