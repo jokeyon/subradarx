@@ -82,7 +82,8 @@ export default function ShareExtension(props: InitialProps) {
     setError(null);
     try {
       writeShareInboxPayload(payload);
-      const primary = 'email-import?shareInbox=1';
+      // Unique query so a second share while `email-import` is already mounted still updates params.
+      const primary = `email-import?shareInbox=1&shareTs=${Date.now()}`;
       if (!(await openHostDeepLink(primary))) openHostApp(primary);
       else close();
     } catch {

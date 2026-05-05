@@ -1,5 +1,6 @@
 import { addDays, format, parse, isValid } from 'date-fns';
 import type { BillingCycle } from '@/lib/types';
+import { extractFirstHttpUrl } from '@/lib/urlUtils';
 
 /** Default English + Chinese keywords for subscription-like mail. */
 export const DEFAULT_SUBSCRIPTION_KEYWORDS = [
@@ -50,6 +51,8 @@ export type EmailRenewalHint = {
   nextChargeDate: string;
   notes: string;
   matchedKeyword: string;
+  /** First http(s) URL in source text (SMS body often puts the link outside the “name” line). */
+  cancelUrl?: string;
 };
 
 /** Stable JSON shape for Smart Import / Share Extension handoff (v1). All parsing stays on-device. */
@@ -63,6 +66,7 @@ export type SubscriptionStructuredJsonV1 = {
   matchedKeyword: string | null;
   confidence: 'high' | 'medium' | 'low';
   sourceExcerpt: string;
+  cancelUrl: string | null;
 };
 
 export function textMatchesSubscriptionKeyword(text: string, keywords: string[]): string | null {
@@ -260,6 +264,8 @@ function internalParseSubscriptionBlob(opts: {
     if (brand && name.length < 4) name = brand.slice(0, 80);
   }
 
+  const cancelUrl = extractFirstHttpUrl(blob);
+
   const structured: SubscriptionStructuredJsonV1 = {
     v: 1,
     name,
@@ -270,6 +276,7 @@ function internalParseSubscriptionBlob(opts: {
     matchedKeyword: kw,
     confidence: computeConfidence(kw, ac ?? null, nextFound),
     sourceExcerpt: blob.slice(0, 400),
+    cancelUrl,
   };
 
   if (!kw || !ac) {
@@ -294,6 +301,7 @@ function internalParseSubscriptionBlob(opts: {
       nextChargeDate: next,
       notes,
       matchedKeyword: kw,
+      ...(cancelUrl ? { cancelUrl } : {}),
     },
   };
 }
@@ -348,6 +356,7 @@ export function pasteStructuredToFormHint(
     nextChargeDate: next,
     notes,
     matchedKeyword: structured.matchedKeyword,
+    ...(structured.cancelUrl ? { cancelUrl: structured.cancelUrl } : {}),
   };
 }
 

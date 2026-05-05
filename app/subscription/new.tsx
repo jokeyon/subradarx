@@ -51,6 +51,7 @@ export default function NewRenewalScreen() {
     prefNotes?: string;
     prefNext?: string;
     prefCycle?: string;
+    prefCancelUrl?: string;
     gmailMessageId?: string;
   }>();
   const navigation = useNavigation();
@@ -84,7 +85,18 @@ export default function NewRenewalScreen() {
     if (params.prefCycle === 'weekly' || params.prefCycle === 'monthly' || params.prefCycle === 'yearly') {
       setCycle(params.prefCycle);
     }
-  }, [params.prefName, params.prefAmount, params.prefCurrency, params.prefNotes, params.prefNext, params.prefCycle]);
+    if (params.prefCancelUrl && looksLikeHttpUrl(String(params.prefCancelUrl))) {
+      setCancelUrl(String(params.prefCancelUrl).trim());
+    }
+  }, [
+    params.prefName,
+    params.prefAmount,
+    params.prefCurrency,
+    params.prefNotes,
+    params.prefNext,
+    params.prefCycle,
+    params.prefCancelUrl,
+  ]);
 
   const closeModal = useCallback(() => {
     if (router.canDismiss()) {

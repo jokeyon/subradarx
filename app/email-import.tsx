@@ -35,14 +35,12 @@ const LOCAL_PASTE_MESSAGE_ID = 'local-paste';
 export default function EmailImportScreen() {
   const { t } = useI18n();
   const router = useRouter();
-  const params = useLocalSearchParams<{ shareText?: string; shareInbox?: string }>();
+  const params = useLocalSearchParams<{ shareText?: string; shareInbox?: string; shareTs?: string }>();
   const navigation = useNavigation();
   const headerHeight = useHeaderHeight();
   const scrollRef = useRef<ScrollView>(null);
   /** Prevents async keyword hydration from overwriting in-progress edits (incl. React Strict Mode double-mount). */
   const keywordsUserEditedRef = useRef(false);
-  /** One automatic open to "new renewal" per distinct paste text (user can tap the card if they come back). */
-  const autoOpenedForPasteKeyRef = useRef<string | null>(null);
 
   const leaveEmailImport = useCallback(() => {
     if (navigation.canGoBack()) {
@@ -135,14 +133,19 @@ export default function EmailImportScreen() {
       }
 
       setPaste(text);
-      router.setParams({ shareText: undefined, shareInbox: undefined });
+      router.setParams({ shareText: undefined, shareInbox: undefined, shareTs: undefined });
     })();
 
     return () => ac.abort();
-  }, [params.shareInbox, params.shareText, router, t]);
+  }, [params.shareInbox, params.shareText, params.shareTs, router, t]);
 
   const openPrefill = useCallback(
-    (hint: EmailRenewalHint, opts?: { skipAmount?: boolean }) => {
+    (hint: EmailRenewalHint, opts?: { skipAmount?: boolean; clearPasteDraft?: boolean }) => {
+      if (opts?.clearPasteDraft) {
+        setPaste('');
+        void AsyncStorage.removeItem(PASTE_DRAFT_STORAGE_KEY);
+      }
+      const cu = hint.cancelUrl?.trim();
       router.push({
         pathname: '/subscription/new',
         params: {
@@ -152,6 +155,7 @@ export default function EmailImportScreen() {
           prefNotes: hint.notes,
           prefNext: hint.nextChargeDate,
           prefCycle: hint.billingCycle,
+          ...(cu ? { prefCancelUrl: cu } : {}),
           ...(hint.messageId.startsWith('local-') ? {} : { gmailMessageId: hint.messageId }),
         },
       });
@@ -159,12 +163,11 @@ export default function EmailImportScreen() {
     [router],
   );
 
-  /** Debounced auto-parse for paste/share text; strips ephemeral `local-*` rows (Gmail rows keep their ids). */
+  /** Debounced parse for paste/share text only updates UI — user confirms via the card (avoids repeat auto-navigation). */
   useEffect(() => {
     const tmr = setTimeout(() => {
       const text = paste.trim();
       if (!text) {
-        autoOpenedForPasteKeyRef.current = null;
         setLastStructured(null);
         setPasteOpenableHint(null);
         setHints((h) => h.filter((x) => !x.messageId.startsWith('local-')));
@@ -182,18 +185,9 @@ export default function EmailImportScreen() {
         hint ?? pasteStructuredToFormHint(structured, LOCAL_PASTE_MESSAGE_ID);
       const usable = openable && structured.matchedKeyword ? openable : null;
       setPasteOpenableHint(usable);
-
-      if (usable) {
-        const pasteKey = text;
-        if (autoOpenedForPasteKeyRef.current !== pasteKey) {
-          autoOpenedForPasteKeyRef.current = pasteKey;
-          const skipAmount = structured.amount == null;
-          openPrefill(usable, { skipAmount });
-        }
-      }
     }, 480);
     return () => clearTimeout(tmr);
-  }, [paste, keywords, openPrefill]);
+  }, [paste, keywords]);
 
   const onSaveKeywords = useCallback(() => {
     void saveCustomKeywordsCsv(keywordCsv);
@@ -269,9 +263,13 @@ export default function EmailImportScreen() {
             </Text>
             <Pressable
               style={styles.btnPrimary}
-              onPress={() =>
-                openPrefill(pasteOpenableHint, { skipAmount: lastStructured.amount == null })
-              }
+              onPress={() => {
+                if (!pasteOpenableHint) return;
+                openPrefill(pasteOpenableHint, {
+                  skipAmount: lastStructured.amount == null,
+                  clearPasteDraft: true,
+                });
+              }}
             >
               <Text style={styles.btnPrimaryText}>{t('emailImport.createRenewal')}</Text>
             </Pressable>
