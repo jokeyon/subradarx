@@ -38,7 +38,7 @@ module.exports = {
       /** Must match a unique App ID you register (app.subradar.ios is taken globally). */
       bundleIdentifier: 'com.jokeyon.subradar',
       /** Bump this string before each App Store upload (EAS `autoIncrement` is incompatible with app.config.js). */
-      buildNumber: '8',
+      buildNumber: '9',
       infoPlist: {
         CFBundleDisplayName: 'subradax',
         ITSAppUsesNonExemptEncryption: false,
@@ -47,7 +47,7 @@ module.exports = {
     android: {
       package: 'com.jokeyon.subradar',
       /** Increment for each Play upload (must be higher than last release). */
-      versionCode: 8,
+      versionCode: 9,
       adaptiveIcon: {
         foregroundImage: './assets/adaptive-icon.png',
         backgroundColor: '#FFEDD5',
