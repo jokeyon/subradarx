@@ -1,3 +1,9 @@
+第二轮（功能锚定 + 更宽色谱 / 形态，与 App 文案对齐 — AI）：
+  subradarx-v2-01-parse-highlight.png — 短信/邮件正文 → 高亮解析（智能导入、关键字命中）
+  subradarx-v2-02-rhythm-dots.png — 周/月/年节奏与「下一期」递进（周期扣款、账单节奏）
+  subradarx-v2-03-receipt-countdown.png — 票据/扣款日与倒计时楔（扣款提醒、续费截止感）
+  subradarx-v2-04-share-into-app.png — 系统分享进 App → 解析清单（邮件/Safari 分享、确认后入库）
+
 2026-02 batch (subradarx re-design — AI, pick by eye, 上架前对照下方清单):
   subradarx-icon-01-orbit-indigo.png   — 靛蓝底 + 粗轨道白环与小点，续费/雷达
   subradarx-icon-02-stack-warm.png   — 桃米底 + 三色厚圆角横条叠放，订阅堆叠
