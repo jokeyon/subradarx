@@ -1,7 +1,8 @@
 Place these PNG files here before production builds (Expo / EAS will fail validation without real icons):
 
   icon.png           — 1024×1024 (iOS)
-  splash-icon.png    — recommended 1284×2778 or large square; used as splash
+  splash-screen.png  — 1284×2778 portrait; #FFEDD5 full bleed + centered app icon (generated — run `npm run splash:compose` after changing icon.png)
+  splash-icon.png    — legacy / spare; splash uses splash-screen.png (app.config.js)
   adaptive-icon.png  — 1024×1024 (Android adaptive foreground)
 
 You can copy assets from a fresh `npx create-expo-app` project, or export from Figma.

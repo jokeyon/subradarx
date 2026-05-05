@@ -14,6 +14,7 @@
     "eas:update:production": "cross-env EAS_NO_VCS=1 eas update --channel production",
     "eas:update:preview": "cross-env EAS_NO_VCS=1 eas update --channel preview",
     "icon:recolor-bg": "node scripts/recolor-icon-background.mjs",
+    "splash:compose": "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/compose-splash.ps1",
     "install-git": "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/install-git-windows.ps1"
   },
   "dependencies": {

@@ -27,9 +27,9 @@ module.exports = {
     newArchEnabled: false,
     icon: './assets/icon.png',
     splash: {
-      image: './assets/splash-icon.png',
+      image: './assets/splash-screen.png',
       resizeMode: 'contain',
-      /** Match new-2026-B-subscription-stack (soft peach). */
+      /** Match stack-warm icon; full-bleed portrait PNG with centered icon (see assets/splash-screen.png). */
       backgroundColor: '#FFEDD5',
     },
     assetBundlePatterns: ['**/*'],
@@ -38,7 +38,7 @@ module.exports = {
       /** Must match a unique App ID you register (app.subradar.ios is taken globally). */
       bundleIdentifier: 'com.jokeyon.subradar',
       /** Bump this string before each App Store upload (EAS `autoIncrement` is incompatible with app.config.js). */
-      buildNumber: '9',
+      buildNumber: '10',
       infoPlist: {
         CFBundleDisplayName: 'subradax',
         ITSAppUsesNonExemptEncryption: false,
@@ -47,7 +47,7 @@ module.exports = {
     android: {
       package: 'com.jokeyon.subradar',
       /** Increment for each Play upload (must be higher than last release). */
-      versionCode: 9,
+      versionCode: 10,
       adaptiveIcon: {
         foregroundImage: './assets/adaptive-icon.png',
         backgroundColor: '#FFEDD5',
