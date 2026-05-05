@@ -322,6 +322,35 @@ export function parseSmartImportFromPastedText(
   });
 }
 
+/** When strict hint is null (e.g. missing amount) but we still matched subscription-like text, build a form prefilling hint. */
+export function pasteStructuredToFormHint(
+  structured: SubscriptionStructuredJsonV1,
+  messageId: string,
+): EmailRenewalHint | null {
+  if (!structured.matchedKeyword) return null;
+  const ref = new Date();
+  const next = structured.nextChargeDate ?? format(addDays(ref, 30), 'yyyy-MM-dd');
+  const snippet =
+    structured.sourceExcerpt.slice(0, 280).trim() +
+    (structured.sourceExcerpt.length > 280 ? '…' : '');
+  let notes = `Paste · ${structured.matchedKeyword}\n— ${snippet}`;
+  const amount = structured.amount ?? 0;
+  const currency = structured.currencyCode ?? 'CNY';
+  if (structured.amount == null) {
+    notes += '\n（未识别金额，请在新条目里填写）';
+  }
+  return {
+    messageId,
+    name: structured.name,
+    amount,
+    currencyCode: currency,
+    billingCycle: structured.billingCycle,
+    nextChargeDate: next,
+    notes,
+    matchedKeyword: structured.matchedKeyword,
+  };
+}
+
 export function buildHintFromEmailParts(opts: {
   messageId: string;
   subject: string;

@@ -2,7 +2,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
-import { format, parse, startOfDay } from 'date-fns';
+import { format, parse, parseISO, startOfDay } from 'date-fns';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
@@ -21,9 +21,10 @@ import { useI18n } from '@/contexts/I18nContext';
 import { useSubRadar } from '@/contexts/SubRadarContext';
 import { advanceNextCharge } from '@/lib/renewalMath';
 import type { BillingCycle } from '@/lib/types';
-import { looksLikeHttpUrl } from '@/lib/urlUtils';
+import { useNameDerivedCancelUrl } from '@/lib/useNameDerivedCancelUrl';
+import { extractFirstHttpUrl, looksLikeHttpUrl } from '@/lib/urlUtils';
 import { normalizeCurrencyCodeForIntl } from '@/lib/formatCurrency';
-import { intlLocaleTag } from '@/lib/formatDates';
+import { intlLocaleTag, formatMediumDate } from '@/lib/formatDates';
 
 const cycles: BillingCycle[] = ['weekly', 'monthly', 'yearly'];
 const reminderValues = [0, 1, 3, 7] as const;
@@ -64,6 +65,12 @@ export default function EditRenewalScreen() {
   const [reminderDays, setReminderDays] = useState(existing?.reminderDays ?? 3);
   const [notes, setNotes] = useState(existing?.notes ?? '');
   const [cancelUrl, setCancelUrl] = useState(existing?.cancelUrl ?? '');
+  const { onCancelUrlChange, mergeCancelUrlOnSave } = useNameDerivedCancelUrl(
+    name,
+    cancelUrl,
+    setCancelUrl,
+    typeof id === 'string' ? id : '',
+  );
 
   const scrollRef = useRef<ScrollView>(null);
 
@@ -130,6 +137,8 @@ export default function EditRenewalScreen() {
     setCancelUrl(existing.cancelUrl ?? '');
   }, [existing]);
 
+  const urlInName = useMemo(() => extractFirstHttpUrl(name), [name]);
+
   if (loading && !existing) {
     return (
       <>
@@ -166,7 +175,7 @@ export default function EditRenewalScreen() {
       Alert.alert(t('common.hint'), t('form.errorAmount'));
       return;
     }
-    const url = cancelUrl.trim();
+    const url = mergeCancelUrlOnSave(cancelUrl.trim(), trimmed);
     await updateRenewal({
       ...existing,
       name: trimmed,
@@ -190,8 +199,8 @@ export default function EditRenewalScreen() {
     leaveEdit();
   };
 
-  const openCancelUrl = async () => {
-    const u = cancelUrl.trim();
+  const openHttpUrl = async (raw: string) => {
+    const u = raw.trim();
     if (!looksLikeHttpUrl(u)) {
       Alert.alert(t('common.hint'), t('form.errorCancelUrl'));
       return;
@@ -226,6 +235,13 @@ export default function EditRenewalScreen() {
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled"
       >
+      {existing.createdAt ? (
+        <Text style={styles.addedOnMeta}>
+          {t('edit.addedOn', {
+            date: formatMediumDate(parseISO(existing.createdAt), locale),
+          })}
+        </Text>
+      ) : null}
       <Text style={styles.label}>{t('form.name')}</Text>
       <TextInput
         style={styles.input}
@@ -233,6 +249,22 @@ export default function EditRenewalScreen() {
         onChangeText={setName}
         placeholderTextColor="#64748B"
       />
+      <Text style={styles.fieldHint}>{t('form.nameUrlAutoFillHint')}</Text>
+      {urlInName && urlInName !== cancelUrl.trim() ? (
+        <Pressable
+          style={styles.nameLinkTap}
+          onPress={() => void openHttpUrl(urlInName)}
+          accessibilityRole="link"
+          accessibilityLabel={`${t('form.openLinkShort')}: ${urlInName}`}
+        >
+          <Text style={styles.nameLinkTapTitle}>
+            {t('form.openLinkShort')} →
+          </Text>
+          <Text style={styles.nameLinkTapUrl} numberOfLines={1} ellipsizeMode="middle">
+            {urlInName}
+          </Text>
+        </Pressable>
+      ) : null}
       <Text style={styles.label}>{t('form.amount')}</Text>
       <TextInput
         style={styles.input}
@@ -323,10 +355,10 @@ export default function EditRenewalScreen() {
         autoCorrect={false}
         keyboardType="url"
         value={cancelUrl}
-        onChangeText={setCancelUrl}
+        onChangeText={onCancelUrlChange}
       />
-      {looksLikeHttpUrl(cancelUrl) ? (
-        <Pressable style={styles.secondary} onPress={() => void openCancelUrl()}>
+      {looksLikeHttpUrl(cancelUrl.trim()) ? (
+        <Pressable style={styles.secondary} onPress={() => void openHttpUrl(cancelUrl)}>
           <Text style={styles.secondaryText}>{t('form.openCancelLink')}</Text>
         </Pressable>
       ) : null}
@@ -356,8 +388,17 @@ const styles = StyleSheet.create({
   content: { padding: 16, paddingBottom: 40 },
   missing: { flex: 1, backgroundColor: '#0B1220', padding: 24, justifyContent: 'center' },
   missingText: { color: '#94A3B8', textAlign: 'center', marginBottom: 16 },
+  addedOnMeta: { color: '#64748B', fontSize: 12, lineHeight: 18, marginBottom: 4 },
   label: { color: '#94A3B8', marginBottom: 6, marginTop: 12, fontSize: 13, fontWeight: '600' },
   fieldHint: { color: '#64748B', fontSize: 12, lineHeight: 17, marginBottom: 8, marginTop: -2 },
+  nameLinkTap: {
+    alignSelf: 'stretch',
+    marginBottom: 4,
+    paddingVertical: 6,
+    paddingHorizontal: 2,
+  },
+  nameLinkTapTitle: { color: '#A5B4FC', fontSize: 14, fontWeight: '600', lineHeight: 20 },
+  nameLinkTapUrl: { color: '#64748B', fontSize: 12, lineHeight: 16, marginTop: 2 },
   input: {
     backgroundColor: '#111827',
     borderRadius: 12,

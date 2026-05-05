@@ -2,8 +2,8 @@ import Constants from 'expo-constants';
 import { File, Paths } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import { parse } from 'date-fns';
-import { useRouter, type Href } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { useFocusEffect, useRouter, type Href } from 'expo-router';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Alert,
   Linking,
@@ -15,13 +15,14 @@ import {
   Text,
   View,
 } from 'react-native';
+import { PermissionStatus } from 'expo-modules-core';
 import { useI18n } from '@/contexts/I18nContext';
 import { useSubRadar } from '@/contexts/SubRadarContext';
-import { FEEDBACK_MAILTO, FREE_LIMIT, IAP_ENABLED } from '@/lib/constants';
+import { FEEDBACK_MAILTO, FREE_LIMIT, GMAIL_IMPORT_ENABLED, IAP_ENABLED } from '@/lib/constants';
 import { formatCurrencyAmount } from '@/lib/formatCurrency';
 import { formatMediumDate, intlLocaleTag } from '@/lib/formatDates';
 import { isExpoGo } from '@/lib/iap';
-import { requestNotificationPermission } from '@/lib/notifications';
+import { getNotificationPermissionStatus, requestNotificationPermission } from '@/lib/notifications';
 
 export default function SettingsScreen() {
   const router = useRouter();
@@ -35,7 +36,24 @@ export default function SettingsScreen() {
     notificationScheduleFailed,
     retryNotificationSchedule,
   } = useSubRadar();
-  const [notifHint, setNotifHint] = useState<string>('');
+  const [notifHint, setNotifHint] = useState<string | null>(null);
+
+  const refreshNotifPermissionLabel = useCallback(async () => {
+    const status = await getNotificationPermissionStatus();
+    setNotifHint(
+      status === PermissionStatus.GRANTED ? t('settings.notifOn') : t('settings.notifOff'),
+    );
+  }, [t]);
+
+  useEffect(() => {
+    void refreshNotifPermissionLabel();
+  }, [refreshNotifPermissionLabel]);
+
+  useFocusEffect(
+    useCallback(() => {
+      void refreshNotifPermissionLabel();
+    }, [refreshNotifPermissionLabel]),
+  );
   const intlTag = intlLocaleTag(locale);
 
   const exportText = useMemo(() => {
@@ -82,8 +100,8 @@ export default function SettingsScreen() {
   };
 
   const onNotif = async () => {
-    const ok = await requestNotificationPermission();
-    setNotifHint(ok ? t('settings.notifOn') : t('settings.notifOff'));
+    await requestNotificationPermission();
+    await refreshNotifPermissionLabel();
   };
 
   const onFeedback = async () => {
@@ -171,13 +189,16 @@ export default function SettingsScreen() {
         <Pressable style={styles.buttonSecondary} onPress={() => void onNotif()}>
           <Text style={styles.buttonSecondaryText}>{t('settings.enableReminders')}</Text>
         </Pressable>
-        {notifHint ? <Text style={styles.hint}>{notifHint}</Text> : null}
+        {notifHint != null ? <Text style={styles.hint}>{notifHint}</Text> : null}
       </View>
 
       <Text style={styles.section}>{t('settings.sectionEmailImport')}</Text>
       <View style={styles.card}>
+        <Text style={styles.muted}>{t('settings.emailImportHint')}</Text>
         <Pressable style={styles.buttonSecondary} onPress={() => router.push('/email-import' as Href)}>
-          <Text style={styles.buttonSecondaryText}>{t('settings.emailImportOpen')}</Text>
+          <Text style={styles.buttonSecondaryText}>
+            {t(GMAIL_IMPORT_ENABLED ? 'settings.emailImportOpenGmail' : 'settings.emailImportOpen')}
+          </Text>
         </Pressable>
       </View>
 

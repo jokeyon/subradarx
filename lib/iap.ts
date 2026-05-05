@@ -1,6 +1,17 @@
 import Constants from 'expo-constants';
 import { Platform } from 'react-native';
-import * as RNIap from 'react-native-iap';
+import {
+  endConnection,
+  fetchProducts,
+  finishTransaction,
+  getAvailablePurchases,
+  initConnection,
+  purchaseErrorListener,
+  purchaseUpdatedListener,
+  requestPurchase,
+  type ProductSubscription,
+  type Purchase,
+} from 'react-native-iap';
 import { IAP_ENABLED, PRODUCT_IDS, SUBSCRIPTION_SKUS } from './constants';
 
 /** Store subscription product row from react-native-iap (fields vary by platform). */
@@ -43,10 +54,7 @@ export function iapSupported(): boolean {
 export async function initIapConnection(): Promise<boolean> {
   if (!iapSupported()) return false;
   try {
-    await RNIap.initConnection();
-    if (Platform.OS === 'android') {
-      await RNIap.flushFailedPurchasesCachedAsPendingAndroid?.();
-    }
+    await initConnection();
     return true;
   } catch {
     return false;
@@ -56,17 +64,26 @@ export async function initIapConnection(): Promise<boolean> {
 export async function endIapConnection() {
   if (!iapSupported()) return;
   try {
-    await RNIap.endConnection();
+    await endConnection();
   } catch {
     /* ignore */
   }
 }
 
+function subscriptionRow(p: ProductSubscription): SubProduct {
+  return {
+    productId: p.id,
+    title: p.title,
+    description: p.description,
+    localizedPrice: p.displayPrice,
+  };
+}
+
 export async function fetchSubscriptionProducts(): Promise<SubProduct[]> {
   if (!iapSupported()) return [];
   try {
-    const subs = await RNIap.getSubscriptions({ skus: SKUS });
-    return sortSubscriptionProducts(subs as SubProduct[]);
+    const subs = (await fetchProducts({ skus: SKUS, type: 'subs' })) as ProductSubscription[];
+    return sortSubscriptionProducts(subs.map(subscriptionRow));
   } catch {
     return [];
   }
@@ -80,15 +97,26 @@ export async function requestSubscriptionPurchase(sku: string): Promise<void> {
         : 'Purchases require a dev/production build (not Expo Go).',
     );
   }
-  await RNIap.requestSubscription({ sku });
+  await requestPurchase({
+    type: 'subs',
+    request: {
+      apple: { sku },
+    },
+  });
+}
+
+function purchaseProductId(p: Purchase): string {
+  return 'productId' in p && p.productId ? p.productId : p.id;
 }
 
 export async function restorePurchases(): Promise<boolean> {
   if (!iapSupported()) return false;
   try {
-    const purchases = await RNIap.getAvailablePurchases();
+    const purchases = await getAvailablePurchases({
+      onlyIncludeActiveItemsIOS: true,
+    });
     return purchases.some(
-      (p) => p.productId === PRODUCT_IDS.monthly || p.productId === PRODUCT_IDS.yearly,
+      (p) => purchaseProductId(p) === PRODUCT_IDS.monthly || purchaseProductId(p) === PRODUCT_IDS.yearly,
     );
   } catch {
     return false;
@@ -101,18 +129,18 @@ export function listenPurchaseUpdates(
   if (!iapSupported()) {
     return { remove: () => {} };
   }
-  const sub = RNIap.purchaseUpdatedListener(async (purchase) => {
-    const pid = purchase.productId;
+  const sub = purchaseUpdatedListener(async (purchase) => {
+    const pid = purchaseProductId(purchase);
     if (pid === PRODUCT_IDS.monthly || pid === PRODUCT_IDS.yearly) {
       try {
-        await RNIap.finishTransaction({ purchase, isConsumable: false });
+        await finishTransaction({ purchase, isConsumable: false });
       } catch {
         /* ignore */
       }
       onOwned();
     }
   });
-  const err = RNIap.purchaseErrorListener(() => {
+  const err = purchaseErrorListener(() => {
     /* user cancelled etc. */
   });
   return {

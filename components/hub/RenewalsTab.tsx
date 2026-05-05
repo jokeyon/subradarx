@@ -1,9 +1,11 @@
+import { Ionicons } from '@expo/vector-icons';
 import { PermissionStatus } from 'expo-modules-core';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { parse } from 'date-fns';
 import { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   FlatList,
   Linking,
   Platform,
@@ -18,6 +20,7 @@ import { useSubRadar } from '@/contexts/SubRadarContext';
 import { formatCurrencyAmount } from '@/lib/formatCurrency';
 import { formatMediumDate, intlLocaleTag } from '@/lib/formatDates';
 import { getNotificationPermissionStatus } from '@/lib/notifications';
+import { looksLikeHttpUrl } from '@/lib/urlUtils';
 
 function cycleLabel(
   t: (k: string) => string,
@@ -51,6 +54,20 @@ export function RenewalsTab() {
   );
 
   const showNotifBanner = Platform.OS !== 'web' && notifStatus !== PermissionStatus.GRANTED;
+
+  const openManageLink = useCallback(
+    async (url: string) => {
+      const u = url.trim();
+      if (!looksLikeHttpUrl(u)) return;
+      const ok = await Linking.canOpenURL(u);
+      if (!ok) {
+        Alert.alert(t('common.hint'), t('form.errorCancelUrl'));
+        return;
+      }
+      await Linking.openURL(u);
+    },
+    [t],
+  );
 
   if (loading) {
     return (
@@ -103,31 +120,50 @@ export function RenewalsTab() {
             <Text style={styles.swipeHint}>{t('renewals.swipeHint')}</Text>
           </View>
         }
-        renderItem={({ item }) => (
-          <Pressable
-            style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
-            onPress={() => router.push(`/subscription/${item.id}`)}
-          >
-            <View style={styles.cardLeft}>
-              <Text style={styles.cardTitle} numberOfLines={2} ellipsizeMode="tail">
-                {item.name}
-              </Text>
-              <Text style={styles.cardSubLeft} numberOfLines={1} ellipsizeMode="tail">
-                {cycleLabel(t, item.billingCycle)}
-              </Text>
+        renderItem={({ item }) => {
+          const manage = item.cancelUrl?.trim() ?? '';
+          const showOpen = looksLikeHttpUrl(manage);
+          return (
+            <View style={styles.card}>
+              <Pressable
+                style={({ pressed }) => [styles.cardMain, pressed && styles.cardPressed]}
+                onPress={() => router.push(`/subscription/${item.id}`)}
+              >
+                <View style={styles.cardLeft}>
+                  <Text style={styles.cardTitle} numberOfLines={2} ellipsizeMode="tail">
+                    {item.name}
+                  </Text>
+                  <Text style={styles.cardSubLeft} numberOfLines={1} ellipsizeMode="tail">
+                    {cycleLabel(t, item.billingCycle)}
+                  </Text>
+                </View>
+                <View style={styles.cardRight}>
+                  <Text style={styles.cardPrice} numberOfLines={1} ellipsizeMode="tail">
+                    {formatCurrencyAmount(item.amount, item.currencyCode, intlTag)}
+                  </Text>
+                  <Text style={styles.cardSubRight} numberOfLines={1} ellipsizeMode="tail">
+                    {t('renewals.next', {
+                      date: formatMediumDate(parse(item.nextChargeDate, 'yyyy-MM-dd', new Date()), locale),
+                    })}
+                  </Text>
+                </View>
+              </Pressable>
+              {showOpen ? (
+                <Pressable
+                  style={({ pressed }) => [styles.cardOpenAside, pressed && styles.cardOpenAsidePressed]}
+                  onPress={() => {
+                    void openManageLink(manage);
+                  }}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('form.openCancelLink')}
+                  hitSlop={8}
+                >
+                  <Ionicons name="open-outline" size={22} color="#A5B4FC" />
+                </Pressable>
+              ) : null}
             </View>
-            <View style={styles.cardRight}>
-              <Text style={styles.cardPrice} numberOfLines={1} ellipsizeMode="tail">
-                {formatCurrencyAmount(item.amount, item.currencyCode, intlTag)}
-              </Text>
-              <Text style={styles.cardSubRight} numberOfLines={1} ellipsizeMode="tail">
-                {t('renewals.next', {
-                  date: formatMediumDate(parse(item.nextChargeDate, 'yyyy-MM-dd', new Date()), locale),
-                })}
-              </Text>
-            </View>
-          </Pressable>
-        )}
+          );
+        }}
       />
       <Pressable
         style={[styles.fab, !canAddMore && styles.fabDisabled]}
@@ -166,19 +202,36 @@ const styles = StyleSheet.create({
   card: {
     marginHorizontal: 16,
     marginTop: 12,
-    height: 96,
-    paddingHorizontal: 16,
+    minHeight: 96,
+    paddingLeft: 16,
+    paddingVertical: 4,
     borderRadius: 14,
     backgroundColor: '#111827',
     borderWidth: 1,
     borderColor: '#1E293B',
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
     overflow: 'hidden',
   },
+  cardMain: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    minWidth: 0,
+    paddingVertical: 12,
+    paddingRight: 8,
+  },
   cardPressed: { opacity: 0.85 },
   cardLeft: { flex: 1, minWidth: 0, paddingRight: 12, justifyContent: 'center' },
+  cardOpenAside: {
+    alignSelf: 'stretch',
+    justifyContent: 'center',
+    paddingRight: 10,
+    paddingLeft: 4,
+    flexShrink: 0,
+  },
+  cardOpenAsidePressed: { opacity: 0.7 },
   cardRight: { alignItems: 'flex-end', justifyContent: 'center', flexShrink: 0, maxWidth: '42%' },
   cardTitle: { color: '#F8FAFC', fontSize: 17, fontWeight: '600', lineHeight: 22 },
   cardSubLeft: { color: '#94A3B8', fontSize: 13, marginTop: 2, lineHeight: 18 },

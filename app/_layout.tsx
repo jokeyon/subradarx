@@ -1,5 +1,7 @@
 import { Stack } from 'expo-router';
+import * as Updates from 'expo-updates';
 import { StatusBar } from 'expo-status-bar';
+import { useEffect } from 'react';
 import { I18nProvider } from '@/contexts/I18nContext';
 import { SubRadarProvider } from '@/contexts/SubRadarContext';
 
@@ -9,6 +11,22 @@ export const unstable_settings = {
 };
 
 export default function RootLayout() {
+  useEffect(() => {
+    if (__DEV__) return;
+    void (async () => {
+      try {
+        if (!Updates.isEnabled) return;
+        const r = await Updates.checkForUpdateAsync();
+        if (r.isAvailable) {
+          await Updates.fetchUpdateAsync();
+          await Updates.reloadAsync();
+        }
+      } catch {
+        // Offline or transient EAS errors — keep running embedded bundle.
+      }
+    })();
+  }, []);
+
   return (
     <I18nProvider>
       <SubRadarProvider>

@@ -7,7 +7,7 @@ import React, {
   useState,
 } from 'react';
 import { PermissionStatus } from 'expo-modules-core';
-import { Alert, Platform } from 'react-native';
+import { Alert, AppState, Platform } from 'react-native';
 import { FREE_LIMIT, IAP_ENABLED } from '@/lib/constants';
 import { t } from '@/lib/i18n';
 import {
@@ -28,6 +28,7 @@ import {
   requestNotificationPermission,
 } from '@/lib/notifications';
 import { loadDevProFlag, loadRenewals, saveRenewals, setDevProFlag } from '@/lib/storage';
+import { rollRenewalIfChargeDayPassed } from '@/lib/renewalMath';
 import type { Renewal } from '@/lib/types';
 
 type SubRadarContextValue = {
@@ -111,9 +112,18 @@ export function SubRadarProvider({ children }: { children: React.ReactNode }) {
     }
   }, [renewals]);
 
+  const applyLoadedRenewalsWithRoll = useCallback((list: Renewal[]) => {
+    const now = new Date();
+    const rolled = list.map((r) => rollRenewalIfChargeDayPassed(r, now));
+    const changed = rolled.some((r, i) => r.nextChargeDate !== list[i].nextChargeDate);
+    return { sorted: sortRenewals(rolled), changed };
+  }, []);
+
   const refresh = useCallback(async () => {
     const [list, devFlag] = await Promise.all([loadRenewals(), loadDevProFlag()]);
-    setRenewals(sortRenewals(list));
+    const { sorted, changed } = applyLoadedRenewalsWithRoll(list);
+    if (changed) await saveRenewals(sorted);
+    setRenewals(sorted);
     setDevProEnabledState(devFlag);
     if (iapSupported()) {
       const ok = await initIapConnection();
@@ -126,7 +136,7 @@ export function SubRadarProvider({ children }: { children: React.ReactNode }) {
     } else {
       setStorePro(false);
     }
-  }, []);
+  }, [applyLoadedRenewalsWithRoll]);
 
   useEffect(() => {
     let removed: (() => void) | undefined;
@@ -148,6 +158,45 @@ export function SubRadarProvider({ children }: { children: React.ReactNode }) {
     };
   }, [refresh]);
 
+  useEffect(() => {
+    if (loading || Platform.OS === 'web') return;
+    let cancelled = false;
+    void (async () => {
+      try {
+        await rescheduleRenewalNotifications(renewals);
+        if (!cancelled) setNotificationScheduleFailed(false);
+      } catch (e) {
+        console.warn('SubRadar: initial rescheduleRenewalNotifications failed', e);
+        if (!cancelled) setNotificationScheduleFailed(true);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [loading, renewals]);
+
+  useEffect(() => {
+    if (Platform.OS === 'web') return;
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state !== 'active') return;
+      void (async () => {
+        const list = await loadRenewals();
+        const { sorted, changed } = applyLoadedRenewalsWithRoll(list);
+        if (!changed) return;
+        await saveRenewals(sorted);
+        setRenewals(sorted);
+        try {
+          await rescheduleRenewalNotifications(sorted);
+          setNotificationScheduleFailed(false);
+        } catch (e) {
+          console.warn('SubRadar: reschedule after date roll on foreground failed', e);
+          setNotificationScheduleFailed(true);
+        }
+      })();
+    });
+    return () => sub.remove();
+  }, [applyLoadedRenewalsWithRoll]);
+
   const setDevPro = useCallback(async (on: boolean) => {
     await setDevProFlag(on);
     setDevProEnabledState(on);
@@ -158,7 +207,7 @@ export function SubRadarProvider({ children }: { children: React.ReactNode }) {
       const prev = await loadRenewals();
       const isFirstSubscription = prev.length === 0;
       const id = `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
-      const next = sortRenewals([...prev, { ...r, id }]);
+      const next = sortRenewals([...prev, { ...r, id, createdAt: new Date().toISOString() }]);
       await persist(next);
       if (isFirstSubscription) {
         await runFirstSaveNotificationPrompt();

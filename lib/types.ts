@@ -15,4 +15,6 @@ export interface Renewal {
    * Opened in the system browser from the edit screen.
    */
   cancelUrl?: string;
+  /** ISO 8601 — set when the renewal is first created (older data may omit). */
+  createdAt?: string;
 }

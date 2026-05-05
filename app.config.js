@@ -10,11 +10,13 @@ module.exports = {
   expo: {
     name: 'subradax',
     slug: 'subradar',
-    version: '1.0.0',
+    version: '1.0.1',
     /** EAS Update: OTA 与商店包用同一 runtime；改 `version` 后需重新 eas build。 */
     runtimeVersion: { policy: 'appVersion' },
     updates: {
       url: `https://u.expo.dev/${EAS_PROJECT_ID}`,
+      /** Ensure startup pulls from the server (not only after crashes). */
+      checkAutomatically: 'ON_LOAD',
     },
     orientation: 'portrait',
     /** Mobile only — avoids EAS Update export requiring react-native-web. */
@@ -36,7 +38,7 @@ module.exports = {
       /** Must match a unique App ID you register (app.subradar.ios is taken globally). */
       bundleIdentifier: 'com.jokeyon.subradar',
       /** Bump this string before each App Store upload (EAS `autoIncrement` is incompatible with app.config.js). */
-      buildNumber: '7',
+      buildNumber: '8',
       infoPlist: {
         CFBundleDisplayName: 'subradax',
         ITSAppUsesNonExemptEncryption: false,
@@ -44,6 +46,8 @@ module.exports = {
     },
     android: {
       package: 'com.jokeyon.subradar',
+      /** Increment for each Play upload (must be higher than last release). */
+      versionCode: 8,
       adaptiveIcon: {
         foregroundImage: './assets/adaptive-icon.png',
         backgroundColor: '#FFEDD5',

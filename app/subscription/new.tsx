@@ -2,9 +2,10 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { useNavigation } from '@react-navigation/native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { format, parse, startOfDay } from 'date-fns';
-import { useCallback, useEffect, useLayoutEffect, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import {
   Alert,
+  Linking,
   Platform,
   Pressable,
   ScrollView,
@@ -20,6 +21,8 @@ import { intlLocaleTag } from '@/lib/formatDates';
 import { normalizeCurrencyCodeForIntl } from '@/lib/formatCurrency';
 import { markGmailMessageImported } from '@/lib/gmailImportStorage';
 import type { BillingCycle } from '@/lib/types';
+import { useNameDerivedCancelUrl } from '@/lib/useNameDerivedCancelUrl';
+import { extractFirstHttpUrl, looksLikeHttpUrl } from '@/lib/urlUtils';
 
 const cycles: BillingCycle[] = ['weekly', 'monthly', 'yearly'];
 const reminderValues = [0, 1, 3, 7] as const;
@@ -63,6 +66,12 @@ export default function NewRenewalScreen() {
   const [reminderDays, setReminderDays] = useState(3);
   const [notes, setNotes] = useState('');
   const [cancelUrl, setCancelUrl] = useState('');
+  const { onCancelUrlChange, mergeCancelUrlOnSave } = useNameDerivedCancelUrl(
+    name,
+    cancelUrl,
+    setCancelUrl,
+    'new',
+  );
 
   useEffect(() => {
     if (params.prefName) setName(String(params.prefName));
@@ -91,6 +100,22 @@ export default function NewRenewalScreen() {
     navigation.setOptions({ title: t('nav.newRenewal') });
   }, [navigation, t]);
 
+  const urlInName = useMemo(() => extractFirstHttpUrl(name), [name]);
+
+  const openHttpUrl = async (raw: string) => {
+    const u = raw.trim();
+    if (!looksLikeHttpUrl(u)) {
+      Alert.alert(t('common.hint'), t('form.errorCancelUrl'));
+      return;
+    }
+    const ok = await Linking.canOpenURL(u);
+    if (!ok) {
+      Alert.alert(t('common.hint'), t('form.errorCancelUrl'));
+      return;
+    }
+    await Linking.openURL(u);
+  };
+
   const save = async () => {
     const trimmed = name.trim();
     if (!trimmed) {
@@ -102,7 +127,7 @@ export default function NewRenewalScreen() {
       Alert.alert(t('common.hint'), t('form.errorAmount'));
       return;
     }
-    const url = cancelUrl.trim();
+    const url = mergeCancelUrlOnSave(cancelUrl.trim(), trimmed);
     await addRenewal({
       name: trimmed,
       amount: n,
@@ -135,6 +160,22 @@ export default function NewRenewalScreen() {
         value={name}
         onChangeText={setName}
       />
+      <Text style={styles.fieldHint}>{t('form.nameUrlAutoFillHint')}</Text>
+      {urlInName && urlInName !== cancelUrl.trim() ? (
+        <Pressable
+          style={styles.nameLinkTap}
+          onPress={() => void openHttpUrl(urlInName)}
+          accessibilityRole="link"
+          accessibilityLabel={`${t('form.openLinkShort')}: ${urlInName}`}
+        >
+          <Text style={styles.nameLinkTapTitle}>
+            {t('form.openLinkShort')} →
+          </Text>
+          <Text style={styles.nameLinkTapUrl} numberOfLines={1} ellipsizeMode="middle">
+            {urlInName}
+          </Text>
+        </Pressable>
+      ) : null}
       <Text style={styles.label}>{t('form.amount')}</Text>
       <TextInput
         style={styles.input}
@@ -227,8 +268,13 @@ export default function NewRenewalScreen() {
         autoCorrect={false}
         keyboardType="url"
         value={cancelUrl}
-        onChangeText={setCancelUrl}
+        onChangeText={onCancelUrlChange}
       />
+      {looksLikeHttpUrl(cancelUrl.trim()) ? (
+        <Pressable style={styles.secondary} onPress={() => void openHttpUrl(cancelUrl)}>
+          <Text style={styles.secondaryText}>{t('form.openCancelLink')}</Text>
+        </Pressable>
+      ) : null}
       <Pressable style={styles.save} onPress={() => void save()}>
         <Text style={styles.saveText}>{t('form.save')}</Text>
       </Pressable>
@@ -248,6 +294,14 @@ const styles = StyleSheet.create({
   smartImportLinkText: { color: '#A5B4FC', fontSize: 14, fontWeight: '600' },
   label: { color: '#94A3B8', marginBottom: 6, marginTop: 12, fontSize: 13, fontWeight: '600' },
   fieldHint: { color: '#64748B', fontSize: 12, lineHeight: 17, marginBottom: 8, marginTop: -2 },
+  nameLinkTap: {
+    alignSelf: 'stretch',
+    marginBottom: 4,
+    paddingVertical: 6,
+    paddingHorizontal: 2,
+  },
+  nameLinkTapTitle: { color: '#A5B4FC', fontSize: 14, fontWeight: '600', lineHeight: 20 },
+  nameLinkTapUrl: { color: '#64748B', fontSize: 12, lineHeight: 16, marginTop: 2 },
   input: {
     backgroundColor: '#111827',
     borderRadius: 12,
@@ -285,4 +339,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   saveText: { color: '#fff', fontWeight: '800', fontSize: 16 },
+  secondary: {
+    marginTop: 12,
+    borderWidth: 1,
+    borderColor: '#334155',
+    paddingVertical: 14,
+    borderRadius: 14,
+    alignItems: 'center',
+  },
+  secondaryText: { color: '#E2E8F0', fontWeight: '700' },
 });

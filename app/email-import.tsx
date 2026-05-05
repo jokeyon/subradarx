@@ -1,4 +1,3 @@
-import * as Clipboard from 'expo-clipboard';
 import { Ionicons } from '@expo/vector-icons';
 import { useHeaderHeight } from '@react-navigation/elements';
 import { useNavigation } from '@react-navigation/native';
@@ -27,9 +26,11 @@ import {
   type EmailRenewalHint,
   type SubscriptionStructuredJsonV1,
   parseSmartImportFromPastedText,
+  pasteStructuredToFormHint,
 } from '@/lib/subscriptionEmailParser';
 
 const PASTE_DRAFT_STORAGE_KEY = 'subradax-email-import-paste-draft';
+const LOCAL_PASTE_MESSAGE_ID = 'local-paste';
 
 export default function EmailImportScreen() {
   const { t } = useI18n();
@@ -38,6 +39,10 @@ export default function EmailImportScreen() {
   const navigation = useNavigation();
   const headerHeight = useHeaderHeight();
   const scrollRef = useRef<ScrollView>(null);
+  /** Prevents async keyword hydration from overwriting in-progress edits (incl. React Strict Mode double-mount). */
+  const keywordsUserEditedRef = useRef(false);
+  /** One automatic open to "new renewal" per distinct paste text (user can tap the card if they come back). */
+  const autoOpenedForPasteKeyRef = useRef<string | null>(null);
 
   const leaveEmailImport = useCallback(() => {
     if (navigation.canGoBack()) {
@@ -77,14 +82,12 @@ export default function EmailImportScreen() {
   const [hints, setHints] = useState<EmailRenewalHint[]>([]);
   const [imported, setImported] = useState<Set<string>>(new Set());
   const [lastStructured, setLastStructured] = useState<SubscriptionStructuredJsonV1 | null>(null);
+  const [pasteOpenableHint, setPasteOpenableHint] = useState<EmailRenewalHint | null>(null);
 
   const keywords = useMemo(
     () => [...DEFAULT_SUBSCRIPTION_KEYWORDS, ...keywordCsv.split(/[,，\n]/).map((x) => x.trim()).filter(Boolean)],
     [keywordCsv],
   );
-
-  const keywordsRef = useRef(keywords);
-  keywordsRef.current = keywords;
 
   useEffect(() => {
     void AsyncStorage.getItem(PASTE_DRAFT_STORAGE_KEY).then((v) => {
@@ -94,9 +97,14 @@ export default function EmailImportScreen() {
   }, []);
 
   useEffect(() => {
+    let cancelled = false;
     void loadCustomKeywords().then((cust) => {
+      if (cancelled || keywordsUserEditedRef.current) return;
       if (cust.length) setKeywordCsv(cust.join(', '));
     });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {
@@ -127,72 +135,70 @@ export default function EmailImportScreen() {
       }
 
       setPaste(text);
-      const messageId = `share-${Date.now()}`;
-      const kw = keywordsRef.current;
-      const { structured, hint } = parseSmartImportFromPastedText(text, kw, messageId);
-      setLastStructured(structured);
-      if (hint) setHints((h) => [hint, ...h]);
-      else if (structured.matchedKeyword || structured.amount != null) {
-        Alert.alert(t('common.hint'), t('emailImport.partialParse'));
-      }
-
       router.setParams({ shareText: undefined, shareInbox: undefined });
     })();
 
     return () => ac.abort();
   }, [params.shareInbox, params.shareText, router, t]);
 
-  const onParsePaste = useCallback(() => {
-    const text = paste.trim();
-    if (!text) {
-      Alert.alert(t('common.hint'), t('emailImport.pasteEmpty'));
-      return;
-    }
-    const messageId = `paste-${Date.now()}`;
-    const { structured, hint } = parseSmartImportFromPastedText(text, keywords, messageId);
-    setLastStructured(structured);
-
-    if (hint) {
-      setHints((h) => [hint, ...h]);
-      return;
-    }
-
-    if (!structured.matchedKeyword && structured.amount == null) {
-      Alert.alert(t('common.hint'), t('emailImport.empty'));
-      return;
-    }
-
-    Alert.alert(t('common.hint'), t('emailImport.partialParse'));
-  }, [paste, keywords, t]);
-
-  const onCopyStructuredJson = useCallback(async () => {
-    if (!lastStructured) return;
-    await Clipboard.setStringAsync(JSON.stringify(lastStructured, null, 2));
-    Alert.alert(t('common.hint'), t('emailImport.jsonCopied'));
-  }, [lastStructured, t]);
-
-  const onSaveKeywords = useCallback(() => {
-    void saveCustomKeywordsCsv(keywordCsv);
-    Alert.alert(t('common.hint'), t('emailImport.keywordsSaved'));
-  }, [keywordCsv, t]);
-
   const openPrefill = useCallback(
-    (hint: EmailRenewalHint) => {
+    (hint: EmailRenewalHint, opts?: { skipAmount?: boolean }) => {
       router.push({
         pathname: '/subscription/new',
         params: {
           prefName: hint.name,
-          prefAmount: String(hint.amount),
+          ...(opts?.skipAmount ? {} : { prefAmount: String(hint.amount) }),
           prefCurrency: hint.currencyCode,
           prefNotes: hint.notes,
           prefNext: hint.nextChargeDate,
           prefCycle: hint.billingCycle,
-          gmailMessageId: hint.messageId,
+          ...(hint.messageId.startsWith('local-') ? {} : { gmailMessageId: hint.messageId }),
         },
       });
     },
     [router],
   );
+
+  /** Debounced auto-parse for paste/share text; strips ephemeral `local-*` rows (Gmail rows keep their ids). */
+  useEffect(() => {
+    const tmr = setTimeout(() => {
+      const text = paste.trim();
+      if (!text) {
+        autoOpenedForPasteKeyRef.current = null;
+        setLastStructured(null);
+        setPasteOpenableHint(null);
+        setHints((h) => h.filter((x) => !x.messageId.startsWith('local-')));
+        return;
+      }
+      const { structured, hint } = parseSmartImportFromPastedText(
+        text,
+        keywords,
+        LOCAL_PASTE_MESSAGE_ID,
+      );
+      setLastStructured(structured);
+      setHints((h) => h.filter((x) => !x.messageId.startsWith('local-')));
+
+      const openable =
+        hint ?? pasteStructuredToFormHint(structured, LOCAL_PASTE_MESSAGE_ID);
+      const usable = openable && structured.matchedKeyword ? openable : null;
+      setPasteOpenableHint(usable);
+
+      if (usable) {
+        const pasteKey = text;
+        if (autoOpenedForPasteKeyRef.current !== pasteKey) {
+          autoOpenedForPasteKeyRef.current = pasteKey;
+          const skipAmount = structured.amount == null;
+          openPrefill(usable, { skipAmount });
+        }
+      }
+    }, 480);
+    return () => clearTimeout(tmr);
+  }, [paste, keywords, openPrefill]);
+
+  const onSaveKeywords = useCallback(() => {
+    void saveCustomKeywordsCsv(keywordCsv);
+    Alert.alert(t('common.hint'), t('emailImport.keywordsSaved'));
+  }, [keywordCsv, t]);
 
   const introKey = GMAIL_IMPORT_ENABLED ? 'emailImport.intro' : 'emailImport.introNoGmail';
 
@@ -215,7 +221,10 @@ export default function EmailImportScreen() {
           placeholder={t('emailImport.keywordsPlaceholder')}
           placeholderTextColor="#64748B"
           value={keywordCsv}
-          onChangeText={setKeywordCsv}
+          onChangeText={(v) => {
+            keywordsUserEditedRef.current = true;
+            setKeywordCsv(v);
+          }}
         />
         <Pressable style={styles.btnSecondary} onPress={onSaveKeywords}>
           <Text style={styles.btnSecondaryText}>{t('emailImport.saveKeywords')}</Text>
@@ -228,6 +237,7 @@ export default function EmailImportScreen() {
         <TextInput
           style={[styles.input, styles.multiline]}
           placeholderTextColor="#64748B"
+          placeholder={t('emailImport.pastePlaceholder')}
           value={paste}
           onChangeText={(v) => {
             setPaste(v);
@@ -240,22 +250,30 @@ export default function EmailImportScreen() {
           }}
           multiline
         />
-        <Pressable style={styles.btnSecondary} onPress={onParsePaste}>
-          <Text style={styles.btnSecondaryText}>{t('emailImport.pasteParse')}</Text>
-        </Pressable>
 
-        {lastStructured ? (
-          <View style={styles.jsonCard}>
-            <Text style={styles.jsonCardTitle}>{t('emailImport.structuredPreview')}</Text>
-            <Text style={styles.jsonMeta}>
+        {pasteOpenableHint && lastStructured ? (
+          <View style={styles.parseCard}>
+            <Text style={styles.parseCardTitle}>{t('emailImport.parseReadyTitle')}</Text>
+            <Text style={styles.parseMeta}>
               {t('emailImport.confidence', { level: lastStructured.confidence })}
             </Text>
-            <Text style={styles.jsonMeta} numberOfLines={3}>
-              {lastStructured.name} · {lastStructured.amount ?? '—'} {lastStructured.currencyCode ?? ''} ·{' '}
-              {lastStructured.nextChargeDate ?? t('emailImport.dateUnknown')}
+            <Text style={styles.parseMeta} numberOfLines={4}>
+              {lastStructured.name}
+              {lastStructured.amount != null
+                ? ` · ${lastStructured.amount} ${lastStructured.currencyCode ?? ''}`
+                : ` · ${t('emailImport.amountPending')}`}{' '}
+              · {lastStructured.nextChargeDate ?? t('emailImport.dateUnknown')} · {lastStructured.billingCycle}
             </Text>
-            <Pressable style={styles.btnSecondary} onPress={() => void onCopyStructuredJson()}>
-              <Text style={styles.btnSecondaryText}>{t('emailImport.copyStructuredJson')}</Text>
+            <Text style={styles.parseKw}>
+              {t('emailImport.matched', { kw: lastStructured.matchedKeyword ?? '—' })}
+            </Text>
+            <Pressable
+              style={styles.btnPrimary}
+              onPress={() =>
+                openPrefill(pasteOpenableHint, { skipAmount: lastStructured.amount == null })
+              }
+            >
+              <Text style={styles.btnPrimaryText}>{t('emailImport.createRenewal')}</Text>
             </Pressable>
           </View>
         ) : null}
@@ -329,7 +347,7 @@ const styles = StyleSheet.create({
   rowMeta: { color: '#CBD5E1', fontSize: 13 },
   rowKw: { color: '#64748B', fontSize: 12 },
   smartBlurb: { color: '#64748B', fontSize: 12, lineHeight: 18, marginBottom: 8 },
-  jsonCard: {
+  parseCard: {
     marginTop: 14,
     padding: 14,
     borderRadius: 14,
@@ -338,8 +356,17 @@ const styles = StyleSheet.create({
     borderColor: '#312E81',
     gap: 8,
   },
-  jsonCardTitle: { color: '#C7D2FE', fontSize: 13, fontWeight: '700' },
-  jsonMeta: { color: '#94A3B8', fontSize: 12 },
+  parseCardTitle: { color: '#C7D2FE', fontSize: 13, fontWeight: '700' },
+  parseMeta: { color: '#94A3B8', fontSize: 12 },
+  parseKw: { color: '#64748B', fontSize: 12 },
+  btnPrimary: {
+    marginTop: 6,
+    paddingVertical: 14,
+    borderRadius: 12,
+    backgroundColor: '#4F46E5',
+    alignItems: 'center',
+  },
+  btnPrimaryText: { color: '#F8FAFC', fontWeight: '700', fontSize: 16 },
   btnSmall: {
     alignSelf: 'flex-start',
     marginTop: 8,
