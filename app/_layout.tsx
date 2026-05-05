@@ -2,8 +2,35 @@ import { Stack } from 'expo-router';
 import * as Updates from 'expo-updates';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
+import { AppState } from 'react-native';
 import { I18nProvider } from '@/contexts/I18nContext';
 import { SubRadarProvider } from '@/contexts/SubRadarContext';
+
+const OTA_RETRY_MS = 2500;
+const OTA_ATTEMPTS = 3;
+
+async function pullOtaOnce(): Promise<boolean> {
+  if (!Updates.isEnabled) return false;
+  const r = await Updates.checkForUpdateAsync();
+  if (!r.isAvailable) return false;
+  await Updates.fetchUpdateAsync();
+  await Updates.reloadAsync();
+  return true;
+}
+
+async function pullOtaWithRetries(): Promise<void> {
+  for (let attempt = 0; attempt < OTA_ATTEMPTS; attempt++) {
+    try {
+      const reloaded = await pullOtaOnce();
+      if (reloaded) return;
+      return;
+    } catch {
+      if (attempt < OTA_ATTEMPTS - 1) {
+        await new Promise((res) => setTimeout(res, OTA_RETRY_MS));
+      }
+    }
+  }
+}
 
 /** Open app on tab bar, not a redirect route. */
 export const unstable_settings = {
@@ -13,18 +40,21 @@ export const unstable_settings = {
 export default function RootLayout() {
   useEffect(() => {
     if (__DEV__) return;
-    void (async () => {
-      try {
-        if (!Updates.isEnabled) return;
-        const r = await Updates.checkForUpdateAsync();
-        if (r.isAvailable) {
-          await Updates.fetchUpdateAsync();
-          await Updates.reloadAsync();
+
+    void pullOtaWithRetries();
+
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state !== 'active') return;
+      void (async () => {
+        try {
+          await pullOtaOnce();
+        } catch {
+          /* resume: one attempt; user may have toggled network */
         }
-      } catch {
-        // Offline or transient EAS errors — keep running embedded bundle.
-      }
-    })();
+      })();
+    });
+
+    return () => sub.remove();
   }, []);
 
   return (
