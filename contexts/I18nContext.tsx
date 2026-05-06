@@ -60,8 +60,12 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     [languagePreference, systemAppLocale],
   );
 
+  // `i18n-js` reads `i18n.locale` at translate time. Updating only in `useEffect` runs *after*
+  // children render, so React Navigation tab/header options computed on that frame still see the
+  // previous locale — and nothing re-renders the tab shell afterward → mixed EN/ZH like the user saw.
+  setI18nLocale(locale);
+
   useEffect(() => {
-    setI18nLocale(locale);
     if (!preferenceHydrated) return;
     void resyncNotificationsForLanguage();
   }, [locale, preferenceHydrated]);
@@ -71,7 +75,10 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     await setLocalePreference(p);
   }, []);
 
-  const t = useCallback((key: string, options?: Record<string, string | number>) => i18n.t(key, options), []);
+  const t = useCallback(
+    (key: string, options?: Record<string, string | number>) => i18n.t(key, options),
+    [locale],
+  );
 
   const value = useMemo(
     () => ({ t, locale, languagePreference, setLanguagePreference }),
