@@ -1,3 +1,4 @@
+import { useLocales } from 'expo-localization';
 import {
   createContext,
   useCallback,
@@ -9,9 +10,9 @@ import {
 } from 'react';
 import {
   i18n,
+  localesToAppLocale,
   resolveAppLocale,
   setI18nLocale,
-  systemLocaleToApp,
   type AppLocale,
 } from '@/lib/i18n';
 import {
@@ -41,30 +42,33 @@ async function resyncNotificationsForLanguage() {
 }
 
 export function I18nProvider({ children }: { children: ReactNode }) {
+  const osLocales = useLocales();
+  const systemAppLocale = useMemo(() => localesToAppLocale(osLocales), [osLocales]);
+
   const [languagePreference, setLanguagePreferenceState] = useState<AppLocalePreference>('system');
-  const [locale, setLocale] = useState<AppLocale>(() => {
-    const L = systemLocaleToApp();
-    setI18nLocale(L);
-    return L;
-  });
+  const [preferenceHydrated, setPreferenceHydrated] = useState(false);
 
   useEffect(() => {
-    void getLocalePreference().then(async (p) => {
+    void getLocalePreference().then((p) => {
       setLanguagePreferenceState(p);
-      const L = resolveAppLocale(p);
-      setLocale(L);
-      setI18nLocale(L);
-      await resyncNotificationsForLanguage();
+      setPreferenceHydrated(true);
     });
   }, []);
+
+  const locale = useMemo(
+    () => resolveAppLocale(languagePreference, systemAppLocale),
+    [languagePreference, systemAppLocale],
+  );
+
+  useEffect(() => {
+    setI18nLocale(locale);
+    if (!preferenceHydrated) return;
+    void resyncNotificationsForLanguage();
+  }, [locale, preferenceHydrated]);
 
   const setLanguagePreference = useCallback(async (p: AppLocalePreference) => {
     setLanguagePreferenceState(p);
     await setLocalePreference(p);
-    const L = resolveAppLocale(p);
-    setLocale(L);
-    setI18nLocale(L);
-    await resyncNotificationsForLanguage();
   }, []);
 
   const t = useCallback((key: string, options?: Record<string, string | number>) => i18n.t(key, options), []);
