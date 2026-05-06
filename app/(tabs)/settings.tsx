@@ -3,7 +3,8 @@ import { File, Paths } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import { parse } from 'date-fns';
 import { useFocusEffect, useRouter, type Href } from 'expo-router';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useNavigation } from '@react-navigation/native';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import {
   Alert,
   Linking,
@@ -26,7 +27,15 @@ import { getNotificationPermissionStatus, requestNotificationPermission } from '
 
 export default function SettingsScreen() {
   const router = useRouter();
+  const navigation = useNavigation();
   const { t, locale, languagePreference, setLanguagePreference } = useI18n();
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      title: t('tabs.settings'),
+      tabBarLabel: t('tabs.settings'),
+    });
+  }, [navigation, t, locale]);
   const {
     isPro,
     devProEnabled,

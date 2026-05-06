@@ -11,11 +11,16 @@ const OTA_ATTEMPTS = 3;
 
 async function pullOtaOnce(): Promise<boolean> {
   if (!Updates.isEnabled) return false;
-  const r = await Updates.checkForUpdateAsync();
-  if (!r.isAvailable) return false;
-  await Updates.fetchUpdateAsync();
-  await Updates.reloadAsync();
-  return true;
+  try {
+    const r = await Updates.checkForUpdateAsync();
+    if (!r.isAvailable) return false;
+    const fetched = await Updates.fetchUpdateAsync();
+    if (!fetched.isNew) return false;
+    await Updates.reloadAsync();
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 async function pullOtaWithRetries(): Promise<void> {

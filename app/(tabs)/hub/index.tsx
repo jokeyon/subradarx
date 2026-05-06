@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useLayoutEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -13,6 +13,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { PermissionStatus } from 'expo-modules-core';
 import { useFocusEffect, useRouter } from 'expo-router';
+import { useNavigation } from '@react-navigation/native';
 import { parse } from 'date-fns';
 import { AddRenewalChoiceModal } from '@/components/hub/AddRenewalChoiceModal';
 import { SwipeToDeleteRow } from '@/components/hub/SwipeToDeleteRow';
@@ -30,7 +31,15 @@ function cycleLabel(t: (k: string) => string, bc: string): string {
 
 export default function HubScreen() {
   const router = useRouter();
+  const navigation = useNavigation();
   const { t, locale } = useI18n();
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      title: t('tabs.hub'),
+      tabBarLabel: t('tabs.hub'),
+    });
+  }, [navigation, t, locale]);
   const { renewals, loading, canAddMore, notificationScheduleFailed, retryNotificationSchedule, deleteRenewal } =
     useSubRadar();
   const insets = useSafeAreaInsets();

@@ -9,10 +9,10 @@ import {
   type ReactNode,
 } from 'react';
 import {
-  i18n,
   localesToAppLocale,
   resolveAppLocale,
   setI18nLocale,
+  tWithLocale,
   type AppLocale,
 } from '@/lib/i18n';
 import {
@@ -76,7 +76,7 @@ export function I18nProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const t = useCallback(
-    (key: string, options?: Record<string, string | number>) => i18n.t(key, options),
+    (key: string, options?: Record<string, string | number>) => tWithLocale(locale, key, options),
     [locale],
   );
 

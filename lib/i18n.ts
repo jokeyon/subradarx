@@ -40,6 +40,21 @@ export function setI18nLocale(locale: AppLocale): void {
   i18n.locale = locale;
 }
 
+/** Translate using an explicit locale (avoids relying on global `i18n.locale` during the same render as navigation options). */
+export function tWithLocale(
+  locale: AppLocale,
+  scope: string,
+  options?: Record<string, string | number>,
+): string {
+  const prev = i18n.locale;
+  i18n.locale = locale;
+  try {
+    return i18n.t(scope, options);
+  } finally {
+    i18n.locale = prev;
+  }
+}
+
 export function t(scope: string, options?: Record<string, string | number>): string {
   return i18n.t(scope, options);
 }
